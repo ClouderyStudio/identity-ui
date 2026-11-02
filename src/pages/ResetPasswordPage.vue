@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
 import { computed, reactive, ref } from 'vue'
 import IdAlert from '@/components/IdAlert.vue'
 import IdButton from '@/components/IdButton.vue'
@@ -8,14 +9,13 @@ import IdLayout from '@/components/IdLayout.vue'
 import { identityApi, isApiError } from '@/api/client'
 
 /**
- * 重置口令：邮件里链接的落点（/reset?token=...）。
+ * 重置密码：邮件里链接的落点（/reset?token=...）。
  *
  * 令牌一次性、30 分钟有效；用掉之后再刷新页面必然失败，所以成功态要直接引导去登录，
  * 不要让用户反复点「重试」。
  */
 const props = withDefaults(defineProps<{ token?: string }>(), { token: '' })
 
-const emit = defineEmits<{ back: [] }>()
 
 const form = reactive({ next: '', confirm: '' })
 const errors = reactive({ next: '', confirm: '' })
@@ -33,8 +33,8 @@ const token = computed(() => {
 const tokenMissing = computed(() => !token.value)
 
 function validate(): boolean {
-  errors.next = form.next.length >= 8 ? '' : '新口令至少 8 位'
-  errors.confirm = form.confirm === form.next ? '' : '两次输入的口令不一致'
+  errors.next = form.next.length >= 8 ? '' : '新密码至少 8 位'
+  errors.confirm = form.confirm === form.next ? '' : '两次输入的密码不一致'
   return !errors.next && !errors.confirm
 }
 
@@ -58,22 +58,22 @@ async function submit() {
   <IdLayout>
     <IdCard>
       <template #header>
-        <h1 class="id-card-title">重置口令</h1>
-        <p class="id-card-subtitle">设置一个新的登录口令</p>
+        <h1 class="id-card-title">重置密码</h1>
+        <p class="id-card-subtitle">设置一个新的登录密码</p>
       </template>
 
       <IdAlert v-if="tokenMissing" variant="error" title="链接无效">
-        这个链接缺少必要的参数，请重新申请找回口令。
+        这个链接缺少必要的参数，请重新申请找回密码。
       </IdAlert>
 
-      <IdAlert v-else-if="success" variant="success" title="口令已重置">
-        请使用新口令登录。
+      <IdAlert v-else-if="success" variant="success" title="密码已重置">
+        请使用新密码登录。
       </IdAlert>
 
       <form v-else class="id-form" novalidate @submit.prevent="submit">
         <IdField
           v-model="form.next"
-          label="新口令"
+          label="新密码"
           type="password"
           autocomplete="new-password"
           revealable
@@ -83,7 +83,7 @@ async function submit() {
         />
         <IdField
           v-model="form.confirm"
-          label="确认新口令"
+          label="确认新密码"
           type="password"
           autocomplete="new-password"
           revealable
@@ -93,11 +93,11 @@ async function submit() {
 
         <IdAlert v-if="formError" variant="error">{{ formError }}</IdAlert>
 
-        <IdButton type="submit" block :loading="submitting">保存新口令</IdButton>
+        <IdButton type="submit" block :loading="submitting">保存新密码</IdButton>
       </form>
 
       <template #footer>
-        <button type="button" class="id-link" @click="emit('back')">返回登录</button>
+        <RouterLink class="id-link" to="/login">返回登录</RouterLink>
       </template>
     </IdCard>
   </IdLayout>

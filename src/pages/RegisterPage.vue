@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, reactive, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import IdAlert from '@/components/IdAlert.vue'
 import IdButton from '@/components/IdButton.vue'
 import IdCard from '@/components/IdCard.vue'
@@ -10,12 +11,11 @@ import { identityApi, isApiError } from '@/api/client'
 /**
  * 注册页。字段与后端 POST /identity/account/register 一一对应。
  *
- * 口令强度只在**长度**上做硬校验（后端 LocalAccountService.MinPasswordLength = 8），
+ * 密码强度只在**长度**上做硬校验（后端 LocalAccountService.MinPasswordLength = 8），
  * 复杂度规则在手机输入法下误伤太大，前端不额外发明。
  */
 withDefaults(defineProps<{ minPasswordLength?: number }>(), { minPasswordLength: 8 })
 
-const emit = defineEmits<{ back: [] }>()
 
 const form = reactive({ username: '', email: '', code: '', password: '', confirm: '' })
 const errors = reactive({ username: '', email: '', code: '', password: '', confirm: '' })
@@ -66,8 +66,8 @@ function validate(): boolean {
   errors.email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) ? '' : '请输入有效的邮箱地址'
   errors.code = /^\d{6}$/.test(form.code.trim()) ? '' : '请输入 6 位验证码'
   errors.password =
-    form.password.length >= 8 ? '' : `口令至少 ${{ minPasswordLength: 8 }.minPasswordLength} 位`
-  errors.confirm = form.confirm === form.password ? '' : '两次输入的口令不一致'
+    form.password.length >= 8 ? '' : `密码至少 ${{ minPasswordLength: 8 }.minPasswordLength} 位`
+  errors.confirm = form.confirm === form.password ? '' : '两次输入的密码不一致'
   return !errors.username && !errors.email && !errors.code && !errors.password && !errors.confirm
 }
 
@@ -96,18 +96,19 @@ async function submit() {
   <IdLayout>
     <IdCard>
       <template #header>
-        <button type="button" class="id-back" @click="emit('back')">
+        <RouterLink class="id-back" to="/login">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
           返回登录
-        </button>
+        </RouterLink>
         <h1 class="id-card-title">注册账号</h1>
         <p class="id-card-subtitle">创建云术账户，一处登录，全站通用</p>
       </template>
 
       <IdAlert v-if="done" variant="success" title="注册成功">
-        账号已创建，请返回登录页使用新口令登录。
+        账号已创建，请使用新密码登录。
+        <RouterLink class="id-link" to="/login">立即登录</RouterLink>
       </IdAlert>
 
       <form v-else class="id-form" novalidate @submit.prevent="submit">
@@ -127,7 +128,7 @@ async function submit() {
           placeholder="example@example.com"
           autocomplete="email"
           required
-          hint="用于找回口令，请填写常用邮箱"
+          hint="用于找回密码，请填写常用邮箱"
           :error="errors.email"
         />
         <IdField
@@ -144,9 +145,9 @@ async function submit() {
         />
         <IdField
           v-model="form.password"
-          label="口令"
+          label="密码"
           type="password"
-          placeholder="口令"
+          placeholder="密码"
           autocomplete="new-password"
           revealable
           required
@@ -155,13 +156,13 @@ async function submit() {
         />
         <IdField
           v-model="form.confirm"
-          label="确认口令"
+          label="确认密码"
           type="password"
-          placeholder="确认口令"
+          placeholder="确认密码"
           autocomplete="new-password"
           revealable
           required
-          :error="errors.confirm || (passwordMismatch ? '两次输入的口令不一致' : '')"
+          :error="errors.confirm || (passwordMismatch ? '两次输入的密码不一致' : '')"
         />
 
         <IdAlert v-if="formError" variant="error">{{ formError }}</IdAlert>
@@ -178,7 +179,7 @@ async function submit() {
       </form>
 
       <template #footer>
-        已有账号？<button type="button" class="id-link" @click="emit('back')">直接登录</button>
+        已有账号？<RouterLink class="id-link" to="/login">直接登录</RouterLink>
       </template>
     </IdCard>
   </IdLayout>

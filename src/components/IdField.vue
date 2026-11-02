@@ -2,7 +2,7 @@
 import { computed, ref, useId } from 'vue'
 
 /**
- * 表单字段：标签 + 输入框 + 错误/提示 + 可选的后置按钮（发送验证码、显示口令）。
+ * 表单字段：标签 + 输入框 + 错误/提示 + 可选的后置按钮（发送验证码、显示密码）。
  *
  * 无障碍：label 通过 for/id 绑定；错误用 aria-describedby 关联，并同时给
  * aria-invalid，读屏用户能听到「该字段有误」而不是只看到红边。
@@ -25,7 +25,7 @@ const props = withDefaults(
     actionText?: string
     /** 右侧按钮是否禁用（如倒计时中）。 */
     actionDisabled?: boolean
-    /** 口令可见切换。 */
+    /** 密码可见切换。 */
     revealable?: boolean
     inputmode?: 'text' | 'email' | 'tel' | 'numeric'
   }>(),
@@ -108,7 +108,7 @@ function onInput(event: Event) {
         v-else-if="revealable && type === 'password'"
         class="id-field__action id-field__action--icon"
         type="button"
-        :aria-label="revealed ? '隐藏口令' : '显示口令'"
+        :aria-label="revealed ? '隐藏密码' : '显示密码'"
         :aria-pressed="revealed"
         @click="revealed = !revealed"
       >

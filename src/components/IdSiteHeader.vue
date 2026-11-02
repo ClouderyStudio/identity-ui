@@ -46,11 +46,7 @@ const action = computed(() => (signedIn.value ? { href: '/account', label: '账�
 
 <style scoped>
 .id-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 30;
+  /* 不用 fixed：由 IdLayout / IdSiteShell 决定它在文档流里的位置 */
   display: flex;
   align-items: center;
   justify-content: space-between;

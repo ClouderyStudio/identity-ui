@@ -39,7 +39,7 @@ const pwd = reactive({ value: 'secret-value' })
         <h2 class="gal-title">IdField</h2>
         <div class="gal-grid">
           <IdField v-model="basic.value" label="默认态" placeholder="placeholder" hint="这是一条提示" />
-          <IdField v-model="pwd.value" label="口令 + 可见切换" type="password" revealable />
+          <IdField v-model="pwd.value" label="密码 + 可见切换" type="password" revealable />
           <IdField v-model="basic.value" label="带后置按钮" action-text="发送验证码" />
           <IdField v-model="invalid.value" label="错误态" error="请输入有效的邮箱地址" />
           <IdField v-model="disabled.value" label="禁用态" disabled />

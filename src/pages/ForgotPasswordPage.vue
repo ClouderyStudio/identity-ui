@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
 import { ref } from 'vue'
 import IdAlert from '@/components/IdAlert.vue'
 import IdButton from '@/components/IdButton.vue'
@@ -8,10 +9,9 @@ import IdLayout from '@/components/IdLayout.vue'
 import { identityApi, isApiError } from '@/api/client'
 
 /**
- * 找回口令：提交邮箱后由后端发送重置链接（POST /identity/account/forgot-password）。
+ * 找回密码：提交邮箱后由后端发送重置链接（POST /identity/account/forgot-password）。
  * 无论邮箱是否注册都展示同一句受理提示，避免这个页面变成邮箱探测接口。
  */
-const emit = defineEmits<{ back: [] }>()
 
 const email = ref('')
 const emailError = ref('')
@@ -41,13 +41,13 @@ async function submit() {
   <IdLayout>
     <IdCard>
       <template #header>
-        <button type="button" class="id-back" @click="emit('back')">
+        <RouterLink class="id-back" to="/login">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
           返回登录
-        </button>
-        <h1 class="id-card-title">找回口令</h1>
+        </RouterLink>
+        <h1 class="id-card-title">找回密码</h1>
         <p class="id-card-subtitle">输入注册邮箱，我们会发送重置链接</p>
       </template>
 
@@ -73,7 +73,7 @@ async function submit() {
       </form>
 
       <template #footer>
-        想起口令了？<button type="button" class="id-link" @click="emit('back')">返回登录</button>
+        想起密码了？<RouterLink class="id-link" to="/login">返回登录</RouterLink>
       </template>
     </IdCard>
   </IdLayout>

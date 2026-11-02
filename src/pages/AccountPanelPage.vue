@@ -1,20 +1,24 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import IdAlert from '@/components/IdAlert.vue'
 import IdButton from '@/components/IdButton.vue'
-import IdCard from '@/components/IdCard.vue'
-import IdDivider from '@/components/IdDivider.vue'
-import IdLayout from '@/components/IdLayout.vue'
+import IdSiteShell from '@/components/IdSiteShell.vue'
 import IdThemeToggle from '@/components/IdThemeToggle.vue'
 import { identityApi, type AccountProfile, type ExternalProvider } from '@/api/client'
+import { useSession } from '@/composables/useSession'
 
 /**
- * 账户面板：对应参考站的 Dashboard —— 顶部身份条 + 资料表格 + 已绑定服务 + 设置。
+ * 账户面板（Dashboard）：全屏布局，参考 Natayark 账户中心的结构。
  *
- * 数据来自 GET /identity/account/profile（服务端会话 Cookie 鉴权），
- * 所以这里展示的是**真实账户资料**，不是从 token 里猜的。
+ *   顶部身份条（头像 / 欢迎语 / 编号 / 邮箱）
+ *   左列：资料卡（UID、状态、注册时间、最近登录、绑定邮箱、登录方式）+ 设置
+ *   右列：可用登录方式、已绑定账号
+ *
+ * 数据来自 GET /identity/account/profile（服务端会话 Cookie 鉴权）。
  */
-const emit = defineEmits<{ changePassword: []; login: [] }>()
+const router = useRouter()
+const session = useSession()
 
 const profile = ref<AccountProfile | null>(null)
 const providers = ref<ExternalProvider[]>([])
@@ -26,6 +30,9 @@ const unbound = computed(() => {
   const bound = new Set((profile.value?.bindings ?? []).map((item) => item.provider))
   return providers.value.filter((provider) => !bound.has(provider.name))
 })
+
+/** UID 展示成短编号；完整 GUID 放在 title 里，避免长串撑坏排版。 */
+const shortId = computed(() => (profile.value ? profile.value.id.replace(/-/g, '').slice(0, 8).toUpperCase() : ''))
 
 onMounted(load)
 
@@ -39,7 +46,7 @@ async function load() {
   }
 }
 
-/** 时间统一按北京时间展示（后端存 UTC）。 */
+/** 时间统一按北京时间（UTC+8）展示。 */
 function formatTime(value?: string | null): string {
   if (!value) return '—'
   const date = new Date(value)
@@ -54,15 +61,6 @@ function formatTime(value?: string | null): string {
     second: '2-digit',
     hour12: false,
   })
-}
-
-/** 邮箱脱敏：本人看自己的资料，但公开卡片照抄参考站的做法只露一部分。 */
-function maskEmail(email?: string | null): string {
-  if (!email) return '未绑定'
-  const [name, domain] = email.split('@')
-  if (!name || !domain) return email
-  if (name.length <= 2) return `${name[0] ?? ''}***@${domain}`
-  return `${name.slice(0, 2)}***@${domain}`
 }
 
 function initials(name?: string): string {
@@ -82,7 +80,7 @@ async function unbind(provider: string) {
       message.value = body?.detail ?? '解绑失败'
       return
     }
-    message.value = `已解绑`
+    message.value = '已解绑'
     await load()
   } catch {
     message.value = '网络异常，请稍后重试'
@@ -92,242 +90,270 @@ async function unbind(provider: string) {
 }
 
 async function logout() {
-  await identityApi.logout()
-  window.location.assign('/login')
+  await identityApi.signOut()
+  session.clear()
+  await router.replace('/login')
 }
 </script>
 
 <template>
-  <IdLayout>
-    <IdCard>
-      <template #header>
-        <p class="id-eyebrow">云术身份中心</p>
-        <h1 class="id-card-title">账户面板</h1>
-      </template>
+  <IdSiteShell>
+    <template #nav>
+      <span class="nav-user">{{ profile?.username ?? '' }}</span>
+      <button type="button" class="nav-action" @click="logout">退出登录</button>
+    </template>
 
-      <p v-if="loading" class="id-loading">加载中…</p>
+    <p v-if="loading" class="loading">加载中…</p>
 
-      <template v-else-if="profile">
-        <!-- 身份条：头像 + 用户名 + 编号 + 邮箱 -->
-        <div class="id-identity">
-          <span class="id-avatar" aria-hidden="true">{{ initials(profile.username) }}</span>
-          <div class="id-identity__text">
-            <p class="id-identity__name">
-              {{ profile.username }}
-              <span v-if="profile.role" class="id-chip">{{ profile.role }}</span>
-            </p>
-            <p class="id-identity__meta">{{ maskEmail(profile.email) }}</p>
-          </div>
+    <IdAlert v-else-if="!profile" variant="info" title="尚未登录">
+      请先登录后查看账户信息。
+    </IdAlert>
+
+    <template v-else>
+      <!-- 身份条 -->
+      <section class="identity">
+        <span class="identity__avatar" aria-hidden="true">{{ initials(profile.username) }}</span>
+        <div class="identity__text">
+          <h1 class="identity__title">
+            欢迎回来，{{ profile.username }}
+            <span class="identity__id">#{{ shortId }}</span>
+          </h1>
+          <p class="identity__meta">{{ profile.email || '未绑定邮箱' }}</p>
         </div>
+      </section>
 
-        <!-- 资料表格：两列，与参考站 Dashboard 的字段节奏一致 -->
-        <dl class="id-facts">
-          <div class="id-fact id-fact--wide">
-            <dt>账户 ID</dt>
-            <dd class="id-fact__mono" :title="profile.id">{{ profile.id }}</dd>
-          </div>
-          <div class="id-fact">
-            <dt>账户状态</dt>
-            <dd>
-              <span class="id-status" :class="profile.hasLocalPassword ? 'is-ok' : 'is-partial'">
-                {{ profile.hasLocalPassword ? '正常' : '仅第三方登录' }}
-              </span>
-            </dd>
-          </div>
-          <div class="id-fact">
-            <dt>注册时间</dt>
-            <dd>{{ formatTime(profile.createdAt) }}</dd>
-          </div>
-          <div class="id-fact">
-            <dt>最近登录</dt>
-            <dd>{{ formatTime(profile.lastLoginAt) }}</dd>
-          </div>
-          <div class="id-fact">
-            <dt>绑定邮箱</dt>
-            <dd>{{ profile.email || '未绑定' }}</dd>
-          </div>
-          <div class="id-fact">
-            <dt>登录方式</dt>
-            <dd>{{ profile.hasLocalPassword ? '口令 + 第三方' : '仅第三方' }}</dd>
-          </div>
-        </dl>
+      <div class="grid">
+        <!-- 左列 -->
+        <div class="column">
+          <section class="panel">
+            <h2 class="panel__title">账户资料</h2>
+            <dl class="facts">
+              <div class="fact">
+                <dt>UID</dt>
+                <dd class="fact__mono" :title="profile.id">{{ shortId }}</dd>
+              </div>
+              <div class="fact">
+                <dt>账户状态</dt>
+                <dd>
+                  <span class="status" :class="profile.hasLocalPassword ? 'is-ok' : 'is-partial'">
+                    {{ profile.hasLocalPassword ? '正常' : '仅第三方登录' }}
+                  </span>
+                </dd>
+              </div>
+              <div class="fact">
+                <dt>注册时间</dt>
+                <dd>{{ formatTime(profile.createdAt) }}</dd>
+              </div>
+              <div class="fact">
+                <dt>最后登录时间</dt>
+                <dd>{{ formatTime(profile.lastLoginAt) }}</dd>
+              </div>
+              <div class="fact">
+                <dt>绑定邮箱</dt>
+                <dd>{{ profile.email || '未绑定' }}</dd>
+              </div>
+              <div class="fact">
+                <dt>登录方式</dt>
+                <dd>{{ profile.hasLocalPassword ? '密码 + 第三方' : '仅第三方' }}</dd>
+              </div>
+            </dl>
+          </section>
 
-        <IdDivider />
-
-        <!-- 已绑定的第三方 -->
-        <section class="id-section">
-          <h2 class="id-section__title">已关联的登录方式</h2>
-          <p v-if="!profile.bindings.length" class="id-muted">还没有绑定任何第三方账号。</p>
-          <ul v-else class="id-bindings">
-            <li v-for="binding in profile.bindings" :key="binding.provider" class="id-binding">
-              <span class="id-binding__main">
-                <span class="id-binding__name">{{ binding.providerName }}</span>
-                <span class="id-binding__time">绑定于 {{ formatTime(binding.createdAt) }}</span>
-              </span>
-              <IdButton
-                variant="secondary"
-                size="sm"
-                :loading="busy === binding.provider"
-                @click="unbind(binding.provider)"
-              >
-                解绑
-              </IdButton>
-            </li>
-          </ul>
-
-          <template v-if="unbound.length">
-            <p class="id-muted">可绑定：</p>
-            <div class="id-providers">
-              <button
-                v-for="provider in unbound"
-                :key="provider.name"
-                type="button"
-                class="id-provider"
-                @click="identityApi.startExternalLogin(provider.name, '/account')"
-              >
-                {{ provider.displayName }}
-              </button>
+          <section class="panel">
+            <h2 class="panel__title">设置</h2>
+            <div class="settings">
+              <div class="settings__group">
+                <span class="settings__label">账户安全</span>
+                <div class="settings__actions">
+                  <IdButton variant="secondary" size="sm" @click="router.push('/password')">修改密码</IdButton>
+                </div>
+              </div>
+              <div class="settings__group">
+                <span class="settings__label">应用主题</span>
+                <IdThemeToggle />
+              </div>
             </div>
-          </template>
-        </section>
-
-        <IdAlert v-if="message" variant="info">{{ message }}</IdAlert>
-
-        <IdDivider />
-
-        <section class="id-section">
-          <h2 class="id-section__title">设置</h2>
-          <div class="id-actions">
-            <IdButton variant="secondary" size="sm" @click="emit('changePassword')">修改口令</IdButton>
-            <IdButton variant="ghost" size="sm" @click="logout">退出登录</IdButton>
-          </div>
-        </section>
-
-        <IdDivider />
-
-        <section class="id-section id-section--inline">
-          <h2 class="id-section__title">外观</h2>
-          <IdThemeToggle />
-        </section>
-      </template>
-
-      <template v-else>
-        <IdAlert variant="info" title="尚未登录">请先登录后查看账户信息。</IdAlert>
-        <div class="id-actions id-actions--center">
-          <IdButton @click="emit('login')">去登录</IdButton>
+          </section>
         </div>
-      </template>
-    </IdCard>
-  </IdLayout>
+
+        <!-- 右列 -->
+        <div class="column">
+          <section class="panel">
+            <h2 class="panel__title">可用于登录本账号的方式</h2>
+            <p v-if="!profile.bindings.length && !unbound.length" class="muted">还没有配置任何第三方登录方式。</p>
+            <ul v-else class="bindings">
+              <li v-for="binding in profile.bindings" :key="binding.provider" class="binding">
+                <span class="binding__main">
+                  <span class="binding__name">{{ binding.providerName }}</span>
+                  <span class="binding__time">绑定于 {{ formatTime(binding.createdAt) }}</span>
+                </span>
+                <IdButton
+                  variant="secondary"
+                  size="sm"
+                  :loading="busy === binding.provider"
+                  @click="unbind(binding.provider)"
+                >
+                  解绑
+                </IdButton>
+              </li>
+              <li v-if="profile.hasLocalPassword" class="binding">
+                <span class="binding__main">
+                  <span class="binding__name">账号密码</span>
+                  <span class="binding__time">已设置</span>
+                </span>
+                <IdButton variant="secondary" size="sm" @click="router.push('/password')">修改</IdButton>
+              </li>
+            </ul>
+
+            <template v-if="unbound.length">
+              <p class="muted">还可绑定：</p>
+              <div class="providers">
+                <button
+                  v-for="provider in unbound"
+                  :key="provider.name"
+                  type="button"
+                  class="provider"
+                  @click="identityApi.startExternalLogin(provider.name, '/account')"
+                >
+                  {{ provider.displayName }}
+                </button>
+              </div>
+            </template>
+          </section>
+
+          <IdAlert v-if="message" variant="info">{{ message }}</IdAlert>
+        </div>
+      </div>
+    </template>
+  </IdSiteShell>
 </template>
 
 <style scoped>
-.id-eyebrow {
-  margin-bottom: var(--id-space-1);
+.nav-user {
+  padding: 0 var(--id-space-2);
   font-size: var(--id-font-small);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--id-text-muted);
 }
 
-.id-card-title {
-  font-size: var(--id-font-subtitle);
-  font-weight: 600;
+.nav-action {
+  padding: 5px 12px;
+  font-size: var(--id-font-small);
+  color: var(--id-text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color var(--id-transition), color var(--id-transition);
+}
+
+.nav-action:hover {
   color: var(--id-text);
+  background: var(--id-surface-hover);
 }
 
-.id-loading {
+.loading {
   color: var(--id-text-muted);
-  font-size: var(--id-font-body);
 }
 
-.id-identity {
+/* 身份条 */
+.identity {
   display: flex;
   align-items: center;
-  gap: var(--id-space-3);
-  margin-bottom: var(--id-space-5);
+  gap: var(--id-space-4);
+  padding: var(--id-space-5) 0 var(--id-space-4);
 }
 
-.id-avatar {
+.identity__avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: var(--id-accent-soft);
   border: 1px solid var(--id-border-strong);
   color: var(--id-accent);
-  font-size: var(--id-font-subtitle);
+  font-size: 26px;
   font-weight: 600;
 }
 
-.id-identity__name {
+.identity__title {
+  font-size: var(--id-font-subtitle);
+  font-weight: 600;
+  color: var(--id-text);
+}
+
+.identity__id {
+  font-size: var(--id-font-body);
+  font-weight: 400;
+  color: var(--id-text-muted);
+}
+
+.identity__meta {
+  font-size: var(--id-font-small);
+  color: var(--id-text-muted);
+}
+
+/* 两列栅格 */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: var(--id-space-4);
+  align-items: start;
+}
+
+.column {
   display: flex;
-  align-items: center;
-  gap: var(--id-space-2);
+  flex-direction: column;
+  gap: var(--id-space-4);
+}
+
+.panel {
+  padding: var(--id-space-5);
+  background: var(--id-surface);
+  border: 1px solid var(--id-border);
+  border-radius: var(--id-radius-card);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+}
+
+.panel__title {
+  margin-bottom: var(--id-space-4);
   font-size: var(--id-font-body);
   font-weight: 600;
   color: var(--id-text);
 }
 
-.id-identity__meta {
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
-}
-
-.id-chip {
-  padding: 0 6px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 16px;
-  color: var(--id-accent);
-  background: var(--id-accent-soft);
-  border-radius: 2px;
-}
-
-/* 资料表格：两列网格，标签在上、值在下（参考站 Dashboard 的信息块） */
-.id-facts {
+.facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--id-space-4) var(--id-space-5);
+  gap: var(--id-space-4);
   margin: 0;
 }
 
-.id-fact--wide {
-  grid-column: 1 / -1;
-}
-
-.id-fact dt {
+.fact dt {
   font-size: var(--id-font-small);
   color: var(--id-text-muted);
 }
 
-.id-fact dd {
+.fact dd {
   margin: 2px 0 0;
   font-size: var(--id-font-body);
   color: var(--id-text);
-  word-break: break-all;
+  word-break: break-word;
 }
 
-.id-fact__mono {
+.fact__mono {
   font-family: 'Cascadia Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 12px !important;
-  /* GUID 用 nowrap + 省略号，避免把两列网格撑歪 */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.id-status {
+.status {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: var(--id-font-body);
 }
 
-.id-status::before {
+.status::before {
   content: '';
   width: 6px;
   height: 6px;
@@ -335,39 +361,37 @@ async function logout() {
   background: currentColor;
 }
 
-.id-status.is-ok {
+.status.is-ok {
   color: var(--id-success);
 }
 
-.id-status.is-partial {
+.status.is-partial {
   color: var(--id-warning);
 }
 
-.id-section {
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--id-space-6);
+}
+
+.settings__group {
   display: flex;
   flex-direction: column;
-  gap: var(--id-space-3);
+  gap: var(--id-space-2);
 }
 
-.id-section--inline {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.id-section__title {
+.settings__label {
   font-size: var(--id-font-small);
-  font-weight: 600;
-  letter-spacing: 0.04em;
   color: var(--id-text-muted);
 }
 
-.id-muted {
-  font-size: var(--id-font-small);
-  color: var(--id-text-faint);
+.settings__actions {
+  display: flex;
+  gap: var(--id-space-2);
 }
 
-.id-bindings {
+.bindings {
   display: flex;
   flex-direction: column;
   gap: var(--id-space-2);
@@ -376,40 +400,47 @@ async function logout() {
   list-style: none;
 }
 
-.id-binding {
+.binding {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--id-space-3);
-  padding: var(--id-space-2) var(--id-space-3);
+  padding: var(--id-space-3);
   background: var(--id-surface-sunken);
   border: 1px solid var(--id-border);
   border-radius: var(--id-radius-field);
 }
 
-.id-binding__main {
+.binding__main {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.id-binding__name {
+.binding__name {
   font-size: var(--id-font-body);
   color: var(--id-text);
 }
 
-.id-binding__time {
+.binding__time {
   font-size: var(--id-font-small);
   color: var(--id-text-faint);
 }
 
-.id-providers {
+.muted {
+  margin-top: var(--id-space-3);
+  font-size: var(--id-font-small);
+  color: var(--id-text-faint);
+}
+
+.providers {
   display: flex;
   flex-wrap: wrap;
   gap: var(--id-space-2);
+  margin-top: var(--id-space-2);
 }
 
-.id-provider {
+.provider {
   height: 30px;
   padding: 0 var(--id-space-3);
   font-size: var(--id-font-small);
@@ -419,27 +450,19 @@ async function logout() {
   border: 1px solid var(--id-border);
   border-radius: var(--id-radius-field);
   cursor: pointer;
-  transition: background-color var(--id-transition), border-color var(--id-transition);
 }
 
-.id-provider:hover {
+.provider:hover {
   background: var(--id-surface-hover);
   border-color: var(--id-text-muted);
 }
 
-.id-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--id-space-2);
-}
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 
-.id-actions--center {
-  justify-content: center;
-  margin-top: var(--id-space-4);
-}
-
-@media (max-width: 520px) {
-  .id-facts {
+  .facts {
     grid-template-columns: 1fr;
   }
 }

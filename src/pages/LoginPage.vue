@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useSession } from '@/composables/useSession'
 import IdAlert from '@/components/IdAlert.vue'
 import IdButton from '@/components/IdButton.vue'
 import IdCard from '@/components/IdCard.vue'
 import IdDivider from '@/components/IdDivider.vue'
 import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
+import { RouterLink } from 'vue-router'
 import { identityApi, isApiError, type ExternalProvider } from '@/api/client'
 
 /**
  * 登录页。
  *
- * 口令登录走 POST /identity/account/login：服务端校验口令并**签发会话 Cookie**，
+ * 密码登录走 POST /identity/account/login：服务端校验密码并**签发会话 Cookie**，
  * 之后的账户面板与其它受保护接口都靠这个 Cookie（HttpOnly，前端拿不到也不需要拿）。
  *
  * 这里刻意不用 /connect/token：password 授权只回 OIDC token、不建立会话，
@@ -22,12 +25,23 @@ import { identityApi, isApiError, type ExternalProvider } from '@/api/client'
  */
 const props = withDefaults(
   defineProps<{
-    /** 登录成功后回跳的站内地址。 */
+    /** 登录成功后回跳的站内地址；缺省读 ?returnUrl=，再缺省进账户面板。 */
     returnUrl?: string
   }>(),
-  // 默认去账户面板：登录成功要有明确去处，落在登录页本身等于什么都没发生
-  { returnUrl: '/account' },
+  { returnUrl: '' },
 )
+
+const router = useRouter()
+const session = useSession()
+
+/** 最终回跳地址：prop > 查询串 > 账户面板。只接受站内路径，挡住 open redirect。 */
+function resolveReturnUrl(): string {
+  const fromQuery = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('returnUrl')
+    : null
+  const candidate = props.returnUrl || fromQuery || '/account'
+  return candidate.startsWith('/') && !candidate.startsWith('//') ? candidate : '/account'
+}
 
 const form = reactive({ account: '', password: '' })
 const errors = reactive<{ account: string; password: string }>({ account: '', password: '' })
@@ -51,9 +65,10 @@ async function submit() {
 
   submitting.value = true
   try {
-    await identityApi.login({ account: form.account.trim(), password: form.password })
-    // 会话 Cookie 已由服务端种下，整页跳转让宿主应用重新拉取登录态
-    window.location.assign(props.returnUrl)
+    const user = await identityApi.login({ account: form.account.trim(), password: form.password })
+    // 会话 Cookie 已由服务端种下；同步内存状态后走路由，避免整页刷新
+    session.set(user)
+    await router.replace(resolveReturnUrl())
   } catch (error) {
     formError.value = isApiError(error) ? error.detail : '网络异常，请稍后再试'
   } finally {
@@ -61,11 +76,6 @@ async function submit() {
   }
 }
 
-const emit = defineEmits<{
-  success: [payload: { accessToken: string; returnUrl: string }]
-  register: []
-  forgot: []
-}>()
 </script>
 
 <template>
@@ -98,8 +108,8 @@ const emit = defineEmits<{
         />
 
         <div class="id-form__links">
-          <button type="button" class="id-link" @click="emit('forgot')">找回密码</button>
-          <button type="button" class="id-link" @click="emit('register')">注册账号</button>
+          <RouterLink class="id-link" to="/forgot">找回密码</RouterLink>
+          <RouterLink class="id-link" to="/register">注册账号</RouterLink>
         </div>
 
         <IdAlert v-if="formError" variant="error">{{ formError }}</IdAlert>

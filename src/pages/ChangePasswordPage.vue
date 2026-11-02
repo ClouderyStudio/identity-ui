@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
 import { computed, reactive, ref } from 'vue'
 import IdAlert from '@/components/IdAlert.vue'
 import IdButton from '@/components/IdButton.vue'
@@ -10,11 +11,9 @@ import { identityApi, isApiError } from '@/api/client'
 /**
  * 改密页。对应 POST /identity/account/password（P2 落地，需登录）。
  *
- * 已经用第三方账号登录、或 Casdoor 存量账号还没设本地口令时，后端会回
- * 「该账号没有本地口令，无法在此设置」——这个提示原样展示，不改成含糊的说法。
+ * 已经用第三方账号登录、或 Casdoor 存量账号还没设本地密码时，后端会回
+ * 「该账号没有本地密码，无法在此设置」——这个提示原样展示，不改成含糊的说法。
  */
-const emit = defineEmits<{ done: [] }>()
-
 const form = reactive({ current: '', next: '', confirm: '' })
 const errors = reactive({ current: '', next: '', confirm: '' })
 const submitting = ref(false)
@@ -35,10 +34,10 @@ const strength = computed(() => {
 })
 
 function validate(): boolean {
-  errors.current = form.current ? '' : '请输入当前口令'
-  errors.next = form.next.length >= 8 ? '' : '新口令至少 8 位'
-  errors.confirm = form.confirm === form.next ? '' : '两次输入的口令不一致'
-  if (form.next && form.next === form.current) errors.next = '新口令不能与当前口令相同'
+  errors.current = form.current ? '' : '请输入当前密码'
+  errors.next = form.next.length >= 8 ? '' : '新密码至少 8 位'
+  errors.confirm = form.confirm === form.next ? '' : '两次输入的密码不一致'
+  if (form.next && form.next === form.current) errors.next = '新密码不能与当前密码相同'
   return !errors.current && !errors.next && !errors.confirm
 }
 
@@ -54,7 +53,6 @@ async function submit() {
     form.current = ''
     form.next = ''
     form.confirm = ''
-    emit('done')
   } catch (error) {
     formError.value = isApiError(error) ? error.detail : '网络异常，请稍后重试'
   } finally {
@@ -67,18 +65,24 @@ async function submit() {
   <IdLayout>
     <IdCard>
       <template #header>
-        <h1 class="id-card-title">修改口令</h1>
+        <RouterLink class="id-back" to="/account">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          返回账户面板
+        </RouterLink>
+        <h1 class="id-card-title">修改密码</h1>
         <p class="id-card-subtitle">修改后其它设备上的登录状态不会立即失效</p>
       </template>
 
-      <IdAlert v-if="success" variant="success" title="口令已修改">
-        下次登录请使用新口令。
+      <IdAlert v-if="success" variant="success" title="密码已修改">
+        下次登录请使用新密码。
       </IdAlert>
 
       <form class="id-form" novalidate @submit.prevent="submit">
         <IdField
           v-model="form.current"
-          label="当前口令"
+          label="当前密码"
           type="password"
           autocomplete="current-password"
           revealable
@@ -88,7 +92,7 @@ async function submit() {
         <div class="id-strength-block">
           <IdField
             v-model="form.next"
-            label="新口令"
+            label="新密码"
             type="password"
             autocomplete="new-password"
             revealable
@@ -103,7 +107,7 @@ async function submit() {
         </div>
         <IdField
           v-model="form.confirm"
-          label="确认新口令"
+          label="确认新密码"
           type="password"
           autocomplete="new-password"
           revealable
@@ -113,7 +117,7 @@ async function submit() {
 
         <IdAlert v-if="formError" variant="error">{{ formError }}</IdAlert>
 
-        <IdButton type="submit" block :loading="submitting">保存新口令</IdButton>
+        <IdButton type="submit" block :loading="submitting">保存新密码</IdButton>
       </form>
     </IdCard>
   </IdLayout>
