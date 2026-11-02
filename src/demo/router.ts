@@ -20,6 +20,10 @@ export const router = createRouter({
     { path: '/reset', name: 'reset', component: () => import('../pages/ResetPasswordPage.vue') },
     { path: '/account', name: 'account', component: () => import('../pages/AccountPanelPage.vue'), meta: { requiresAuth: true } },
     { path: '/password', name: 'password', component: () => import('../pages/ChangePasswordPage.vue'), meta: { requiresAuth: true } },
+    // 管理员后台：requiresAuth 只保证「已登录」，是不是管理员由后端 [AdminOnly] 判定。
+    // 前端刻意不做管理员判定——名单在服务端配置里，前端拿不到也不该复制一份。
+    { path: '/admin/accounts', name: 'admin-accounts', component: () => import('../pages/AdminAccountsPage.vue'), meta: { requiresAuth: true } },
+    { path: '/admin/providers', name: 'admin-providers', component: () => import('../pages/AdminProvidersPage.vue'), meta: { requiresAuth: true } },
     { path: '/terms', name: 'terms', component: () => import('../pages/TermsPage.vue') },
     { path: '/privacy', name: 'privacy', component: () => import('../pages/PrivacyPage.vue') },
     { path: '/gallery', name: 'gallery', component: () => import('./GalleryPage.vue') },

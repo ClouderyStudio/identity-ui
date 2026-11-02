@@ -184,6 +184,138 @@ export const identityApi = {
   },
 }
 
+
+/** 管理员后台：账号列表项（GET /identity/admin/accounts）。 */
+export interface AdminAccount {
+  id: string
+  username: string
+  email?: string | null
+  avatar?: string | null
+  role?: string | null
+  hasPassword: boolean
+  /** null = 没有口令；pbkdf2 / bcrypt / unknown 只是形状标签，**不是**哈希本体。 */
+  passwordAlgorithm?: string | null
+  casdoorId: string
+  createdAt: string
+  lastLoginAt?: string | null
+  bindingCount: number
+}
+
+export interface AdminAccountPage {
+  total: number
+  page: number
+  pageSize: number
+  items: AdminAccount[]
+}
+
+export interface AdminAccountDetail {
+  account: AdminAccount
+  providers: string[]
+}
+
+/** 管理员后台：登录方式（密钥只回 hasSecret 布尔，永远不回密钥本体）。 */
+export interface AdminProvider {
+  id: string
+  name: string
+  displayName: string
+  kind: 'oauth2' | 'rainbow'
+  enabled: boolean
+  icon?: string | null
+  clientId?: string | null
+  hasSecret: boolean
+  authorizeUrl?: string | null
+  tokenUrl?: string | null
+  userInfoUrl?: string | null
+  scope?: string | null
+  apiUrl?: string | null
+  type?: string | null
+  fieldMapping?: string | null
+  bindingCount: number
+}
+
+/** 新建 / 修改登录方式的请求体；clientSecret 留空表示保留原密钥。 */
+export interface AdminProviderInput {
+  name?: string
+  displayName: string
+  kind: string
+  enabled: boolean
+  icon?: string | null
+  clientId?: string | null
+  clientSecret?: string | null
+  authorizeUrl?: string | null
+  tokenUrl?: string | null
+  userInfoUrl?: string | null
+  scope?: string | null
+  apiUrl?: string | null
+  type?: string | null
+  fieldMapping?: string | null
+}
+
+/** 管理员后台接口。全部走 /identity/admin/*，由 [AdminOnly] 校验管理员名单。 */
+export const identityAdminApi = {
+  async accounts(keyword: string, page: number, pageSize: number): Promise<AdminAccountPage> {
+    const query = new URLSearchParams({
+      ...(keyword ? { keyword } : {}),
+      page: String(page),
+      pageSize: String(pageSize),
+    })
+    const body = await request<{ success: boolean; total: number; page: number; pageSize: number; items: AdminAccount[] }>(
+      '/identity/admin/accounts?' + query.toString(),
+    )
+    return { total: body.total, page: body.page, pageSize: body.pageSize, items: body.items }
+  },
+
+  async account(id: string): Promise<AdminAccountDetail> {
+    const body = await request<{ success: boolean; account: AdminAccount; providers: string[] }>(
+      '/identity/admin/accounts/' + encodeURIComponent(id),
+    )
+    return { account: body.account, providers: body.providers }
+  },
+
+  setRole(id: string, role: string | null): Promise<unknown> {
+    return request('/identity/admin/accounts/' + encodeURIComponent(id) + '/role', {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    })
+  },
+
+  /** 重置口令：返回的临时口令只出现这一次，页面必须提示管理员立刻转告用户。 */
+  async resetPassword(id: string): Promise<string> {
+    const body = await request<{ success: boolean; temporaryPassword: string }>(
+      '/identity/admin/accounts/' + encodeURIComponent(id) + '/reset-password',
+      { method: 'POST', body: JSON.stringify({}) },
+    )
+    return body.temporaryPassword
+  },
+
+  async providers(): Promise<AdminProvider[]> {
+    const body = await request<{ success: boolean; items: AdminProvider[] }>('/identity/admin/providers')
+    return body.items
+  },
+
+  createProvider(input: AdminProviderInput): Promise<unknown> {
+    return request('/identity/admin/providers', { method: 'POST', body: JSON.stringify(input) })
+  },
+
+  updateProvider(id: string, input: AdminProviderInput): Promise<unknown> {
+    return request('/identity/admin/providers/' + encodeURIComponent(id), {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    })
+  },
+
+  deleteProvider(id: string): Promise<unknown> {
+    return request('/identity/admin/providers/' + encodeURIComponent(id), { method: 'DELETE' })
+  },
+
+  setProviderEnabled(id: string, enabled: boolean): Promise<unknown> {
+    return request('/identity/admin/providers/' + encodeURIComponent(id) + '/enabled', {
+      method: 'POST',
+      body: JSON.stringify({ enabled }),
+    })
+  },
+}
+
 export function isApiError(value: unknown): value is ApiError {
   return typeof value === 'object' && value !== null && 'detail' in value && 'status' in value
 }
