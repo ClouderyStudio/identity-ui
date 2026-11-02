@@ -24,6 +24,26 @@ export interface CurrentUser {
   avatar?: string | null
 }
 
+/** 账户资料（GET /identity/account/profile，本人可见）。 */
+export interface AccountBinding {
+  provider: string
+  providerName: string
+  displayName?: string | null
+  createdAt: string
+}
+
+export interface AccountProfile {
+  id: string
+  username: string
+  email?: string | null
+  avatar?: string | null
+  role?: string | null
+  createdAt: string
+  lastLoginAt?: string | null
+  hasLocalPassword: boolean
+  bindings: AccountBinding[]
+}
+
 export interface ExternalProvider {
   name: string
   displayName: string
@@ -90,6 +110,29 @@ export const identityApi = {
       '/identity/auth/status',
     )
     return body.isAuthenticated && body.user ? body.user : null
+  },
+
+  /**
+   * 口令登录：服务端校验并**签发会话 Cookie**（不是拿 OIDC token）。
+   * 账户面板读的是 Cookie 会话，所以面板场景必须走这条，而不是 /connect/token。
+   */
+  async login(payload: { account: string; password: string }): Promise<CurrentUser> {
+    const body = await request<{ success: boolean; user: CurrentUser }>('/identity/account/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return body.user
+  },
+
+  /** 账户资料；未登录时后端回 401，这里转成 null。 */
+  async profile(): Promise<AccountProfile | null> {
+    try {
+      const body = await request<{ success: boolean; user: AccountProfile }>('/identity/account/profile')
+      return body.user
+    } catch (error) {
+      if (isApiError(error) && error.status === 401) return null
+      throw error
+    }
   },
 
   register(payload: { username: string; email: string; password: string }): Promise<unknown> {

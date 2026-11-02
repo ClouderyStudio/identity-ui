@@ -11,21 +11,22 @@ import { identityApi, isApiError, type ExternalProvider } from '@/api/client'
 /**
  * 登录页。
  *
- * 两个入口并存，与后端现状一致：
- *   1. 口令登录 → 走 OIDC password 授权（P1 落地），拿 token 后由宿主应用决定怎么存；
- *   2. 第三方登录 → 整页跳 /identity/external/{provider}/challenge（E1 落地）。
+ * 口令登录走 POST /identity/account/login：服务端校验口令并**签发会话 Cookie**，
+ * 之后的账户面板与其它受保护接口都靠这个 Cookie（HttpOnly，前端拿不到也不需要拿）。
  *
- * 注意：本页**不**自己发会话 Cookie。ClouderyApi 的会话 Cookie 由服务端在回调里签发，
- * 前端只负责跳转与展示，避免出现第二个签发路径。
+ * 这里刻意不用 /connect/token：password 授权只回 OIDC token、不建立会话，
+ * 拿它当登录会让「登录成功但面板显示未登录」。
+ * 需要令牌的 RP 场景仍走标准授权码流程（/connect/authorize）。
+ *
+ * 第三方登录 → 整页跳 /identity/external/{provider}/challenge（E1 落地）。
  */
 const props = withDefaults(
   defineProps<{
     /** 登录成功后回跳的站内地址。 */
     returnUrl?: string
-    /** 后端基址（嵌入宿主时通常留空，走同源）。 */
-    loginEndpoint?: string
   }>(),
-  { returnUrl: '/', loginEndpoint: '/connect/token' },
+  // 默认去账户面板：登录成功要有明确去处，落在登录页本身等于什么都没发生
+  { returnUrl: '/account' },
 )
 
 const form = reactive({ account: '', password: '' })
@@ -50,41 +51,11 @@ async function submit() {
 
   submitting.value = true
   try {
-    // password 授权：标准 OAuth2 表单，不是自定义 JSON
-    const body = new URLSearchParams({
-      grant_type: 'password',
-      client_id: 'cloudery-spa',
-      username: form.account.trim(),
-      password: form.password,
-      scope: 'openid profile email offline_access',
-    })
-
-    const response = await fetch(props.loginEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
-    })
-
-    if (!response.ok) {
-      // 协议错误体是 { error, error_description }，不是统一 { detail }
-      const payload = (await response.json().catch(() => null)) as
-        | { error_description?: string }
-        | null
-      formError.value = payload?.error_description ?? '用户名或密码错误。'
-      return
-    }
-
-    const token = (await response.json()) as { access_token?: string }
-    if (!token.access_token) {
-      formError.value = '登录响应异常，请稍后再试'
-      return
-    }
-
-    // 交给宿主应用：这里只回调，不自己存 token（存储策略属于宿主）
-    emit('success', { accessToken: token.access_token, returnUrl: props.returnUrl })
+    await identityApi.login({ account: form.account.trim(), password: form.password })
+    // 会话 Cookie 已由服务端种下，整页跳转让宿主应用重新拉取登录态
     window.location.assign(props.returnUrl)
   } catch (error) {
-    formError.value = isApiError(error) ? error.detail : '网络异常，请检查连接后重试'
+    formError.value = isApiError(error) ? error.detail : '网络异常，请稍后再试'
   } finally {
     submitting.value = false
   }
