@@ -42,6 +42,8 @@ export interface AccountProfile {
   lastLoginAt?: string | null
   hasLocalPassword: boolean
   bindings: AccountBinding[]
+  /** 是否管理员：由后端按 Authorization:Admins 名单判定，前端**不要**用 role 自行推断。 */
+  isAdmin: boolean
 }
 
 export interface ExternalProvider {

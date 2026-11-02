@@ -100,6 +100,14 @@ async function logout() {
   <IdSiteShell>
     <template #nav>
       <span class="nav-user">{{ profile?.username ?? '' }}</span>
+      <button
+        v-if="profile?.isAdmin"
+        type="button"
+        class="nav-action"
+        @click="router.push('/admin/accounts')"
+      >
+        管理后台
+      </button>
       <button type="button" class="nav-action" @click="logout">退出登录</button>
     </template>
 
