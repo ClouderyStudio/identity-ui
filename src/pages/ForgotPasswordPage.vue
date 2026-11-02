@@ -5,13 +5,11 @@ import IdButton from '@/components/IdButton.vue'
 import IdCard from '@/components/IdCard.vue'
 import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
+import { identityApi, isApiError } from '@/api/client'
 
 /**
- * 找回口令。
- *
- * **后端还没有找回接口**（P2 只做了注册与改密，邮箱验证码重置属于后续阶段），
- * 所以这里只做到「提交邮箱 → 展示已受理」，不假装成功、不发明接口。
- * 接上后端时把 submit 里的注释替换成真实调用即可，其余 UI 不用动。
+ * 找回口令：提交邮箱后由后端发送重置链接（POST /identity/account/forgot-password）。
+ * 无论邮箱是否注册都展示同一句受理提示，避免这个页面变成邮箱探测接口。
  */
 const emit = defineEmits<{ back: [] }>()
 
@@ -29,10 +27,10 @@ async function submit() {
 
   submitting.value = true
   try {
-    // TODO(后端就绪后)：改为 POST /identity/account/forgot-password { email }
-    // 现在刻意不调接口：没有该端点时请求只会 404，展示「已受理」才是诚实的。
-    await new Promise((resolve) => setTimeout(resolve, 400))
+    await identityApi.forgotPassword(email.value.trim().toLowerCase())
     submitted.value = true
+  } catch (error) {
+    emailError.value = isApiError(error) ? error.detail : '网络异常，请稍后重试'
   } finally {
     submitting.value = false
   }

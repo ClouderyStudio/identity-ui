@@ -135,7 +135,27 @@ export const identityApi = {
     }
   },
 
-  register(payload: { username: string; email: string; password: string }): Promise<unknown> {
+  /** 发送邮箱验证码（注册 / 找回共用）。purpose: register | reset */
+  sendEmailCode(payload: { email: string; purpose?: 'register' | 'reset' }): Promise<unknown> {
+    return request('/identity/account/email-code', { method: 'POST', body: JSON.stringify(payload) })
+  },
+
+  /** 申请重置口令：无论邮箱是否存在都返回同一句受理提示。 */
+  forgotPassword(email: string): Promise<unknown> {
+    return request('/identity/account/forgot-password', { method: 'POST', body: JSON.stringify({ email }) })
+  },
+
+  /** 用邮件里的令牌重置口令。 */
+  resetPassword(payload: { token: string; newPassword: string }): Promise<unknown> {
+    return request('/identity/account/reset-password', { method: 'POST', body: JSON.stringify(payload) })
+  },
+
+  /** 登出：清服务端会话（与 /identity/auth/logout 等价，走身份中心自己的端点）。 */
+  async signOut(): Promise<void> {
+    await request('/identity/account/logout', { method: 'POST', body: JSON.stringify({}) })
+  },
+
+  register(payload: { username: string; email: string; code: string; password: string }): Promise<unknown> {
     return request('/identity/account/register', { method: 'POST', body: JSON.stringify(payload) })
   },
 

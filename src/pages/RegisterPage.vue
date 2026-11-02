@@ -33,7 +33,7 @@ const countdown = ref(0)
 const sending = ref(false)
 let timer: ReturnType<typeof setInterval> | undefined
 
-function sendCode() {
+async function sendCode() {
   if (countdown.value > 0 || sending.value) return
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
     errors.email = '请先填写有效的邮箱地址'
@@ -41,14 +41,20 @@ function sendCode() {
   }
 
   errors.email = ''
+  formError.value = ''
   sending.value = true
-  // TODO(后端就绪后)：POST /identity/account/email-code { email }
-  sending.value = false
-  countdown.value = 60
-  timer = setInterval(() => {
-    countdown.value -= 1
-    if (countdown.value <= 0 && timer) clearInterval(timer)
-  }, 1000)
+  try {
+    await identityApi.sendEmailCode({ email: form.email.trim().toLowerCase(), purpose: 'register' })
+    countdown.value = 60
+    timer = setInterval(() => {
+      countdown.value -= 1
+      if (countdown.value <= 0 && timer) clearInterval(timer)
+    }, 1000)
+  } catch (error) {
+    formError.value = isApiError(error) ? error.detail : '发送失败，请稍后重试'
+  } finally {
+    sending.value = false
+  }
 }
 
 onUnmounted(() => {
@@ -73,7 +79,8 @@ async function submit() {
   try {
     await identityApi.register({
       username: form.username.trim(),
-      email: form.email.trim(),
+      email: form.email.trim().toLowerCase(),
+      code: form.code.trim(),
       password: form.password,
     })
     done.value = true

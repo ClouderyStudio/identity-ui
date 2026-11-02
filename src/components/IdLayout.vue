@@ -61,6 +61,8 @@ withDefaults(
   align-items: center;
   padding: var(--id-shell-padding);
   padding-left: max(var(--id-shell-padding), 42%);
+  /* 顶部留出固定页眉的高度 */
+  padding-top: max(var(--id-shell-padding), 72px);
   padding-bottom: var(--id-space-7);
 }
 
