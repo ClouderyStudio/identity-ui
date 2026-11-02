@@ -48,7 +48,7 @@ const current = computed(() => options.find((option) => option.value === mode.va
   display: inline-flex;
   gap: 2px;
   padding: 3px;
-  border-radius: var(--id-radius-pill);
+  border-radius: var(--id-radius-control);
   background: var(--id-surface-sunken);
   border: 1px solid var(--id-border);
 }
@@ -58,9 +58,9 @@ const current = computed(() => options.find((option) => option.value === mode.va
   align-items: center;
   justify-content: center;
   width: 30px;
-  height: 26px;
+  height: 24px;
   border: none;
-  border-radius: var(--id-radius-pill);
+  border-radius: 2px;
   background: transparent;
   color: var(--id-text-muted);
   cursor: pointer;

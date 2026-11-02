@@ -1,102 +1,101 @@
 /*
- * 设计令牌：明暗双主题。
+ * 设计令牌：Fluent Design 口径的明暗双主题。
  *
- * 规则（见 docs/IDENTITY-OPENIDDICT-PLAN.md §13.1）：
- *   - 全站只有 3 档字号层级（标题 / 正文 / 辅助）
- *   - 卡片 = 半透明深色底 + backdrop-filter: blur(20px) + 1px 内描边 + 24px 圆角
- *   - 背景全屏固定，不随内容滚动；登录卡片浮在其上，四周留白 >= 15%
+ * 规则：
+ *   - 圆角克制：卡片 8px、控件 4px（Fluent 2 的控件圆角就是 4px，不用胶囊形）
+ *   - 卡片材质 = 半透明底 + 高斯模糊（acrylic），不加描边堆叠
+ *   - 背景由宿主页面自行提供：本库默认不画背景，只保证在任意背景上可读
+ *   - 字号只有 3 档：标题 28/20、正文 14、辅助 12
  *
- * 颜色一律用语义名（surface / text / accent …），页面与组件只引用语义名，
- * 不直接写 hex —— 换主题只改这一层。
+ * 颜色一律用语义名，页面与组件只引用语义名，不直接写 hex。
  */
 
 :root,
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  /* 底色：参考站是 rgb(16,16,20) 的近黑，卡片略亮一档 */
-  --id-bg-base: #0d0e12;
-  --id-bg-gradient-a: #16202e;
-  --id-bg-gradient-b: #0b0d11;
+  /* Fluent 深色底是中性灰 #202020，不是纯黑 */
+  --id-bg-base: #202020;
 
-  /* 卡片：约 10% 白色叠加 + 毛玻璃 */
-  --id-surface: rgba(255, 255, 255, 0.08);
-  --id-surface-strong: rgba(255, 255, 255, 0.12);
-  --id-surface-hover: rgba(255, 255, 255, 0.14);
-  --id-surface-sunken: rgba(0, 0, 0, 0.38);
-  --id-border: rgba(255, 255, 255, 0.14);
-  --id-border-strong: rgba(255, 255, 255, 0.26);
+  /* 卡片：acrylic 的深色配比（Fluent 深色主题约 55% 不透明） */
+  --id-surface: rgba(32, 32, 32, 0.72);
+  --id-surface-strong: rgba(48, 48, 48, 0.88);
+  --id-surface-hover: rgba(255, 255, 255, 0.08);
+  --id-surface-sunken: rgba(255, 255, 255, 0.06);
+  --id-border: rgba(255, 255, 255, 0.1);
+  --id-border-strong: rgba(255, 255, 255, 0.18);
 
-  /* 文字：主标题接近纯白，正文 82%，辅助 55% */
-  --id-text: rgba(255, 255, 255, 0.94);
+  --id-text: rgba(255, 255, 255, 0.96);
   --id-text-body: rgba(255, 255, 255, 0.82);
-  --id-text-muted: rgba(255, 255, 255, 0.55);
-  --id-text-faint: rgba(255, 255, 255, 0.38);
+  --id-text-muted: rgba(255, 255, 255, 0.6);
+  --id-text-faint: rgba(255, 255, 255, 0.42);
 
-  /* 强调色：参考站主按钮是低饱和的浅蓝，链接用同族更亮的蓝 */
-  --id-accent: #7fb2ff;
-  --id-accent-strong: #4f8dff;
-  --id-accent-soft: rgba(79, 141, 255, 0.16);
-  --id-on-accent: #08111f;
+  /* Fluent 的品牌蓝 */
+  --id-accent: #60a5fa;
+  --id-accent-strong: #93c5fd;
+  --id-accent-soft: rgba(96, 165, 250, 0.14);
+  --id-on-accent: #10131a;
 
-  /* 语义色 */
-  --id-danger: #ff7d7d;
-  --id-danger-soft: rgba(255, 125, 125, 0.14);
-  --id-success: #5fd39b;
-  --id-success-soft: rgba(95, 211, 155, 0.14);
-  --id-warning: #ffc46b;
-  --id-warning-soft: rgba(255, 196, 107, 0.14);
+  --id-danger: #f87171;
+  --id-danger-soft: rgba(248, 113, 113, 0.14);
+  --id-success: #4ade80;
+  --id-success-soft: rgba(74, 222, 128, 0.14);
+  --id-warning: #fbbf24;
+  --id-warning-soft: rgba(251, 191, 36, 0.14);
 
-  --id-shadow-card: 0 24px 64px rgba(0, 0, 0, 0.55);
-  --id-shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --id-scrim: rgba(0, 0, 0, 0.35);
-  --id-overlay-image-opacity: 0.55;
+  /* Fluent 的 elevation：卡片只有一层很淡的阴影 */
+  --id-shadow-card: 0 8px 16px rgba(0, 0, 0, 0.28);
+  --id-shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.24);
+  --id-scrim: rgba(0, 0, 0, 0.4);
+  --id-overlay-image-opacity: 0.6;
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --id-bg-base: #eef2f8;
-  --id-bg-gradient-a: #dfe9f7;
-  --id-bg-gradient-b: #f6f8fc;
+  --id-bg-base: #f3f3f3;
 
-  /* 浅色主题不追求毛玻璃的「厚」感：白底 72% 已足够透出背景，重模糊会让文字发灰 */
-  --id-surface: rgba(255, 255, 255, 0.74);
+  /* 浅色 acrylic 用白色 72%，模糊后仍能透出宿主的背景 */
+  --id-surface: rgba(255, 255, 255, 0.8);
   --id-surface-strong: rgba(255, 255, 255, 0.9);
-  --id-surface-hover: rgba(255, 255, 255, 0.98);
-  --id-surface-sunken: rgba(15, 23, 42, 0.05);
-  --id-border: rgba(15, 23, 42, 0.12);
-  --id-border-strong: rgba(15, 23, 42, 0.22);
+  --id-surface-hover: rgba(0, 0, 0, 0.045);
+  --id-surface-sunken: rgba(0, 0, 0, 0.035);
+  --id-border: rgba(0, 0, 0, 0.1);
+  --id-border-strong: rgba(0, 0, 0, 0.18);
 
-  --id-text: #101827;
-  --id-text-body: #263349;
-  --id-text-muted: #5b6880;
-  --id-text-faint: #8b97ab;
+  --id-text: #1a1a1a;
+  --id-text-body: #2b2b2b;
+  --id-text-muted: #5c5c5c;
+  --id-text-faint: #8a8a8a;
 
-  --id-accent: #2563eb;
-  --id-accent-strong: #1d4ed8;
-  --id-accent-soft: rgba(37, 99, 235, 0.1);
+  --id-accent: #0f6cbd;
+  --id-accent-strong: #115ea3;
+  --id-accent-soft: rgba(15, 108, 189, 0.1);
   --id-on-accent: #ffffff;
 
-  --id-danger: #d93b3b;
-  --id-danger-soft: rgba(217, 59, 59, 0.1);
-  --id-success: #12855b;
-  --id-success-soft: rgba(18, 133, 91, 0.1);
-  --id-warning: #a86a00;
-  --id-warning-soft: rgba(168, 106, 0, 0.12);
+  --id-danger: #c42b1c;
+  --id-danger-soft: rgba(196, 43, 28, 0.09);
+  --id-success: #0f7b0f;
+  --id-success-soft: rgba(15, 123, 15, 0.09);
+  --id-warning: #9d5d00;
+  --id-warning-soft: rgba(157, 93, 0, 0.1);
 
-  --id-shadow-card: 0 24px 64px rgba(24, 39, 75, 0.16);
-  --id-shadow-soft: 0 8px 24px rgba(24, 39, 75, 0.1);
-  --id-scrim: rgba(15, 23, 42, 0.18);
-  --id-overlay-image-opacity: 0.28;
+  --id-shadow-card: 0 8px 16px rgba(0, 0, 0, 0.06);
+  --id-shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --id-scrim: rgba(0, 0, 0, 0.2);
+  --id-overlay-image-opacity: 0.3;
 }
 
 :root {
-  /* 尺寸与节奏 */
-  --id-radius-card: 24px;
-  --id-radius-field: 12px;
-  --id-radius-pill: 999px;
+  /* 圆角：克制的 4/8px，不是胶囊 */
+  --id-radius-card: 8px;
+  --id-radius-field: 4px;
+  --id-radius-pill: 4px;
+  --id-radius-control: 4px;
+
+  /* 高斯模糊强度：卡片主体用 20px，浮层可以更大 */
   --id-blur-card: 20px;
+
   --id-space-1: 4px;
   --id-space-2: 8px;
   --id-space-3: 12px;
@@ -105,20 +104,20 @@
   --id-space-6: 32px;
   --id-space-7: 48px;
 
-  /* 字号只有 3 档：标题 28/20、正文 14、辅助 12 */
-  --id-font-family: 'Segoe UI Variable Display', system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Roboto, sans-serif;
+  /* Fluent 的 Segoe UI Variable 是首选字体 */
+  --id-font-family: 'Segoe UI Variable Text', 'Segoe UI Variable Display', 'Segoe UI',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
   --id-font-title: 28px;
   --id-font-subtitle: 20px;
   --id-font-body: 14px;
   --id-font-small: 12px;
 
-  /* 卡片宽度与留白：桌面端卡片占位 420px，四周留白 >= 15% */
-  --id-card-width: 420px;
-  --id-shell-padding: clamp(24px, 8vw, 160px);
-  --id-control-height: 42px;
+  --id-card-width: 400px;
+  /* 卡片靠右，左侧留白 >= 15%（桌面端 40%） */
+  --id-shell-padding: clamp(24px, 6vw, 96px);
+  --id-control-height: 36px;
 
-  --id-transition: 160ms cubic-bezier(0.2, 0, 0, 1);
+  --id-transition: 120ms cubic-bezier(0.33, 0, 0.67, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

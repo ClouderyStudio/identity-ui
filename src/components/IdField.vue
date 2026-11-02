@@ -157,12 +157,14 @@ function onInput(event: Event) {
 .id-field__input {
   width: 100%;
   height: var(--id-control-height);
-  padding: 0 var(--id-space-4);
+  padding: 0 var(--id-space-3);
   font-size: var(--id-font-body);
   color: var(--id-text);
   background: var(--id-surface-sunken);
   border: 1px solid var(--id-border);
+  /* Fluent 输入框：4px 圆角 + 聚焦时底部强调线 */
   border-radius: var(--id-radius-field);
+  border-bottom-color: var(--id-text-muted);
   outline: none;
   transition: border-color var(--id-transition), background-color var(--id-transition),
     box-shadow var(--id-transition);
@@ -176,10 +178,17 @@ function onInput(event: Event) {
   border-color: var(--id-border-strong);
 }
 
+.id-field__input:hover:not(:disabled) {
+  background: var(--id-surface-hover);
+}
+
 .id-field__input:focus-visible,
 .id-field__input:focus {
-  border-color: var(--id-accent);
-  box-shadow: 0 0 0 3px var(--id-accent-soft);
+  background: var(--id-surface-strong);
+  border-color: var(--id-border);
+  /* Fluent 的聚焦表现是底部一条品牌色线，不是整圈发光 */
+  border-bottom: 2px solid var(--id-accent);
+  padding-bottom: 0;
   outline: none;
 }
 
@@ -207,7 +216,7 @@ function onInput(event: Event) {
   color: var(--id-accent);
   background: transparent;
   border: none;
-  border-radius: var(--id-radius-field);
+  border-radius: 2px;
   cursor: pointer;
   transition: background-color var(--id-transition), color var(--id-transition);
 }

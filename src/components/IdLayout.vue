@@ -3,17 +3,16 @@ import IdBackground from './IdBackground.vue'
 import IdThemeToggle from './IdThemeToggle.vue'
 
 /**
- * 页面外壳：全屏背景 + 左侧卡片 + 右侧留白。
+ * 页面外壳：内容卡片靠右，左侧留白交给宿主背景。
  *
- * 桌面端卡片贴左（参考站就是左侧浮卡、右侧留给插画），四周留白 >= 15%；
- * 窄屏改成居中单列。页脚放法务文案与主题切换。
+ * 桌面端卡片贴右（参考站就是一侧浮卡、另一侧留给背景），留白 >= 15%；
+ * 窄屏回到单列居中。背景默认不画，由宿主页面自己提供。
  */
 withDefaults(
   defineProps<{
+    /** 需要本库铺背景时才传（默认不画）。 */
     image?: string
-    /** 页脚法务文案（各应用可替换）。 */
     legal?: string
-    /** 是否隐藏主题切换（嵌进宿主应用时可能已有自己的切换）。 */
     hideThemeToggle?: boolean
   }>(),
   {
@@ -57,10 +56,11 @@ withDefaults(
   z-index: 1;
   flex: 1;
   display: flex;
+  /* 卡片靠右：主轴末端对齐，左侧留白由 padding-left 撑开 */
+  justify-content: flex-end;
   align-items: center;
-  /* 卡片贴左、右侧留给背景：参考站就是这个构图，四周留白仍由 --id-shell-padding 保证 >= 15% */
   padding: var(--id-shell-padding);
-  padding-right: max(var(--id-shell-padding), 30%);
+  padding-left: max(var(--id-shell-padding), 42%);
   padding-bottom: var(--id-space-7);
 }
 
@@ -76,7 +76,7 @@ withDefaults(
   align-items: center;
   justify-content: space-between;
   gap: var(--id-space-4);
-  padding: 0 var(--id-shell-padding) var(--id-space-5);
+  padding: 0 var(--id-shell-padding) var(--id-space-4);
   color: var(--id-text-faint);
 }
 
@@ -84,20 +84,16 @@ withDefaults(
   font-size: var(--id-font-small);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .id-layout__main {
     padding: var(--id-space-5);
-    padding-right: var(--id-space-5);
+    padding-left: var(--id-space-5);
     align-items: flex-start;
-    padding-top: max(var(--id-space-6), 8vh);
+    padding-top: max(var(--id-space-6), 10vh);
   }
 
   .id-layout__slot {
     max-width: 100%;
-  }
-
-  .id-layout__footer {
-    padding: 0 var(--id-space-5) var(--id-space-5);
   }
 }
 </style>

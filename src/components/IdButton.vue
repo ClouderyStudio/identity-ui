@@ -39,10 +39,11 @@ withDefaults(
   justify-content: center;
   gap: var(--id-space-2);
   height: var(--id-control-height);
-  padding: 0 var(--id-space-5);
+  padding: 0 var(--id-space-4);
   font-size: var(--id-font-body);
   font-weight: 600;
-  border-radius: var(--id-radius-pill);
+  /* Fluent 控件圆角是 4px，不用胶囊形 */
+  border-radius: var(--id-radius-control);
   border: 1px solid transparent;
   cursor: pointer;
   transition: background-color var(--id-transition), border-color var(--id-transition),
@@ -64,8 +65,8 @@ withDefaults(
 }
 
 .id-button--sm {
-  height: 34px;
-  padding: 0 var(--id-space-4);
+  height: 28px;
+  padding: 0 var(--id-space-3);
   font-size: var(--id-font-small);
 }
 
@@ -79,19 +80,21 @@ withDefaults(
 }
 
 .id-button--secondary {
-  background: var(--id-surface-strong);
+  background: var(--id-surface-sunken);
   border-color: var(--id-border-strong);
   color: var(--id-text);
 }
 
 .id-button--secondary:hover:not(:disabled) {
   background: var(--id-surface-hover);
+  border-color: var(--id-text-muted);
 }
 
 .id-button--ghost {
   background: transparent;
   color: var(--id-accent);
   padding: 0 var(--id-space-2);
+  font-weight: 500;
 }
 
 .id-button--ghost:hover:not(:disabled) {
