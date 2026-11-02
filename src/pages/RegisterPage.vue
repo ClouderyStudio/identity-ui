@@ -17,7 +17,25 @@ import { identityApi, isApiError } from '@/api/client'
 withDefaults(defineProps<{ minPasswordLength?: number }>(), { minPasswordLength: 8 })
 
 
-const form = reactive({ username: '', email: '', code: '', password: '', confirm: '' })
+// 认领模式：第三方回调带过来的注册请求（claim 是服务端暂存票据的键，只在这里用一次）。
+// 这些常量必须在 form 之前声明——form 的初始值引用了它们。
+const claimParams = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search)
+  : new URLSearchParams()
+const claimKey = claimParams.get('claim') ?? ''
+const claimProvider = claimParams.get('provider') ?? ''
+const claimName = claimParams.get('name') ?? ''
+const claimEmail = claimParams.get('email') ?? ''
+const isClaim = computed(() => claimKey.length > 0)
+
+const form = reactive({
+  username: claimName || '',
+  email: claimEmail || '',
+  code: '',
+  password: '',
+  confirm: '',
+})
+
 const errors = reactive({ username: '', email: '', code: '', password: '', confirm: '' })
 const submitting = ref(false)
 const formError = ref('')
@@ -82,8 +100,13 @@ async function submit() {
       email: form.email.trim().toLowerCase(),
       code: form.code.trim(),
       password: form.password,
+      ...(isClaim.value ? { claimKey } : {}),
     })
     done.value = true
+    if (isClaim.value) {
+      // 认领注册已由服务端建立会话
+      setTimeout(() => window.location.assign('/account'), 1200)
+    }
   } catch (error) {
     formError.value = isApiError(error) ? error.detail : '网络异常，请稍后重试'
   } finally {
@@ -103,10 +126,17 @@ async function submit() {
           返回登录
         </RouterLink>
         <h1 class="id-card-title">注册账号</h1>
-        <p class="id-card-subtitle">创建云术账户，一处登录，全站通用</p>
+        <p v-if="isClaim" class="id-card-subtitle">
+          你的 {{ claimProvider }} 账号（{{ claimName || claimEmail || '第三方身份' }}）尚未关联云术账户，
+          设置密码完成注册后将自动绑定。
+        </p>
+        <p v-else class="id-card-subtitle">创建云术账户，一处登录，全站通用</p>
       </template>
 
-      <IdAlert v-if="done" variant="success" title="注册成功">
+      <IdAlert v-if="done && isClaim" variant="success" title="注册成功">
+        账号已创建并绑定 {{ claimProvider || '第三方账号' }}，正在进入账户面板…
+      </IdAlert>
+      <IdAlert v-else-if="done" variant="success" title="注册成功">
         账号已创建，请使用新密码登录。
         <RouterLink class="id-link" to="/login">立即登录</RouterLink>
       </IdAlert>

@@ -155,7 +155,8 @@ export const identityApi = {
     await request('/identity/account/logout', { method: 'POST', body: JSON.stringify({}) })
   },
 
-  register(payload: { username: string; email: string; code: string; password: string }): Promise<unknown> {
+  /** 注册；claimKey 来自第三方回调（未绑定身份的认领票据），带上后会自动绑定并直接建立会话。 */
+  register(payload: { username: string; email: string; code: string; password: string; claimKey?: string }): Promise<unknown> {
     return request('/identity/account/register', { method: 'POST', body: JSON.stringify(payload) })
   },
 
