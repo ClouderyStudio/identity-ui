@@ -3,3 +3,8 @@ dist
 dist-demo
 *.local
 .DS_Store
+
+# 环境变量：真实文件不入库（可能含 API 地址之外的凭据），只保留模板
+.env
+.env.*
+!.env.example
