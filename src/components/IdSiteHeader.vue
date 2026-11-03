@@ -52,6 +52,11 @@ const action = computed(() => (signedIn.value ? { href: '/account', label: '账�
   justify-content: space-between;
   gap: var(--id-space-4);
   padding: var(--id-space-3) var(--id-space-5);
+  z-index: 2;
+    /* 高斯模糊：背后的背景被磨砂化，卡片自身保持半透明 */
+  backdrop-filter: blur(var(--id-blur-card)) saturate(100%);
+  -webkit-backdrop-filter: blur(var(--id-blur-card)) saturate(100%);
+  color: var(--id-text-body);
 }
 
 .id-header__brand {

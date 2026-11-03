@@ -17,7 +17,7 @@ withDefaults(
     hideThemeToggle?: boolean
   }>(),
   {
-    image: '',
+    image: '/bg.jpg',
     legal: '云术工作室 · 身份中心',
     hideThemeToggle: false,
   },

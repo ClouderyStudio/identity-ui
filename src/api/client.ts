@@ -42,7 +42,10 @@ export interface AccountProfile {
   lastLoginAt?: string | null
   hasLocalPassword: boolean
   bindings: AccountBinding[]
-  /** 是否管理员：由后端按 Authorization:Admins 名单判定，前端**不要**用 role 自行推断。 */
+  /**
+   * 是否是「任意站点的管理员」：由后端按 identity_user_roles 判定，只用来决定要不要显示后台入口。
+   * 前端**不要**用 role 自行推断；能不能进某个后台由服务端按站点判定。
+   */
   isAdmin: boolean
 }
 
@@ -198,6 +201,8 @@ export interface AdminAccount {
   /** null = 没有口令；pbkdf2 / bcrypt / unknown 只是形状标签，**不是**哈希本体。 */
   passwordAlgorithm?: string | null
   casdoorId: string
+  /** active = 正常；disabled = 已停用（不能登录，已有会话立即失效）。 */
+  status: string
   createdAt: string
   lastLoginAt?: string | null
   bindingCount: number
@@ -253,7 +258,17 @@ export interface AdminProviderInput {
   fieldMapping?: string | null
 }
 
-/** 管理员后台接口。全部走 /identity/admin/*，由 [AdminOnly] 校验管理员名单。 */
+/**
+ * 分站职权。站点键由服务端下发（GET .../roles 的 sites），前端不维护第二份清单。
+ */
+export interface SiteRole {
+  site: string
+  role: string
+  grantedBy?: string | null
+  updatedAt: string
+}
+
+/** 管理员后台接口。全部走 /identity/admin/*，由服务端按 identity 站点职权校验。 */
 export const identityAdminApi = {
   async accounts(keyword: string, page: number, pageSize: number): Promise<AdminAccountPage> {
     const query = new URLSearchParams({
@@ -279,6 +294,43 @@ export const identityAdminApi = {
       method: 'PUT',
       body: JSON.stringify({ role }),
     })
+  },
+
+  /** 建号：注册依赖邮箱验证码，邮件不通时管理员仍要能给人开号。 */
+  createAccount(input: { username: string; email?: string | null; password: string }): Promise<{ id: string }> {
+    return request('/identity/admin/accounts', { method: 'POST', body: JSON.stringify(input) })
+  },
+
+  /** 停用 / 启用。停用立即生效，不必等会话 Cookie 过期。 */
+  setStatus(id: string, status: 'active' | 'disabled'): Promise<unknown> {
+    return request('/identity/admin/accounts/' + encodeURIComponent(id) + '/status', {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    })
+  },
+
+  /** 解绑第三方登录。解绑后账号将无法登录时服务端拒绝（404）。 */
+  unbind(id: string, provider: string): Promise<unknown> {
+    return request(
+      '/identity/admin/accounts/' + encodeURIComponent(id) + '/bindings/' + encodeURIComponent(provider),
+      { method: 'DELETE' },
+    )
+  },
+
+  /** 读某人的分站职权，同时拿到「可授予站点」清单。 */
+  async roles(id: string): Promise<{ sites: string[]; roles: SiteRole[] }> {
+    const body = await request<{ success: boolean; sites: string[]; roles: SiteRole[] }>(
+      '/identity/admin/accounts/' + encodeURIComponent(id) + '/roles',
+    )
+    return { sites: body.sites, roles: body.roles }
+  },
+
+  /** 授予 / 撤销站点职权；role 传 null 表示撤销。 */
+  setSiteRole(id: string, site: string, role: string | null): Promise<unknown> {
+    return request(
+      '/identity/admin/accounts/' + encodeURIComponent(id) + '/roles/' + encodeURIComponent(site),
+      { method: 'PUT', body: JSON.stringify({ role }) },
+    )
   },
 
   /** 重置口令：返回的临时口令只出现这一次，页面必须提示管理员立刻转告用户。 */
