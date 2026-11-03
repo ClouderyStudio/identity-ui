@@ -38,6 +38,6 @@ export default defineConfig(({ mode }) => {
             output: { assetFileNames: 'identity-ui.[ext]' },
           },
         }
-      : { outDir: 'dist-demo' },
+      : { outDir: 'dist' },
   }
 })
