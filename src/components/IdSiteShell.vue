@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { IconGithub } from '@/icons'
-import M3IconButton from '@/components/m3/M3IconButton.vue'
-import M3TopAppBar from '@/components/m3/M3TopAppBar.vue'
+import { M3IconButton, M3TopAppBar } from '@cloudery/m3-ui'
 import IdBrand from './identity/IdBrand.vue'
 import IdThemeToggle from './identity/IdThemeToggle.vue'
 

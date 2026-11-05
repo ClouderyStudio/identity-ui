@@ -2,9 +2,8 @@
 import { computed } from 'vue'
 import { IconBrightnessAuto, IconDarkMode, IconLightMode } from '@/icons'
 import { useTheme, type ThemeMode } from '@/composables/useTheme'
-import M3IconButton from '@/components/m3/M3IconButton.vue'
-import M3SegmentedButton, { type SegmentedOption } from '@/components/m3/M3SegmentedButton.vue'
-import M3Tooltip from '@/components/m3/M3Tooltip.vue'
+import { M3IconButton, M3Tooltip } from '@cloudery/m3-ui'
+import { M3SegmentedButton, type IconComponent } from '@cloudery/m3-ui'
 
 /**
  * 主题切换：浅色 / 深色 / 跟随系统。
@@ -24,7 +23,13 @@ const props = withDefaults(
 
 const { mode, isDark, setMode, toggle } = useTheme()
 
-const options: SegmentedOption[] = [
+interface ThemeOption {
+  value: ThemeMode
+  label: string
+  icon: IconComponent
+}
+
+const options: ThemeOption[] = [
   { value: 'light', label: '浅色', icon: IconLightMode },
   { value: 'dark', label: '深色', icon: IconDarkMode },
   { value: 'system', label: '跟随系统', icon: IconBrightnessAuto },

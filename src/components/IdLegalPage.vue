@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { IconArrowBack } from '@/icons'
-import M3Button from '@/components/m3/M3Button.vue'
-import M3Icon from '@/components/m3/M3Icon.vue'
+import { M3Button, M3Icon } from '@cloudery/m3-ui'
 import IdCard from './IdCard.vue'
 import IdLayout from './IdLayout.vue'
 

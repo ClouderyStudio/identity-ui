@@ -45,6 +45,17 @@ pnpm shots        # 用本机 Edge / Chrome 无头截图到 .review/（需先 pn
 截图脚本参数写成 `--flag=value`：`--theme=light|dark|both`、`--only=<名称片段>`、`--url=<地址>`、`--out=<目录>`。
 脚本会注入一个假的 `fetch`，让 `/identity/*` 返回示例数据，因此不用连后端就能核对账户面板与管理后台。
 
+## 依赖的组件库
+
+M3 组件来自独立仓库 [m3-ui](../m3-ui)，发布为 `@cloudery/m3-ui`：
+
+- 本仓库只保留身份中心自己的组件与页面，不再有 M3 组件副本
+- 配色（`m3-color-tokens.css`）**留在站点**，组件库只带结构令牌 ——
+  官方站用蓝色、scforge 用橙色，而组件代码只有一份
+
+本地联调时 `package.json` 用 `file:../m3-ui`。**注意 pnpm 的 `file:` 是复制语义**：
+改了组件源码要 `cd ../m3-ui && pnpm build`，再回到本仓库 `pnpm install` 才会生效。
+
 ## 目录
 
 ```

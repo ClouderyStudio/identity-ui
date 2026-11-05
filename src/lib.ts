@@ -14,8 +14,8 @@ import './styles/base.css'
 import './styles/motion.css'
 import './styles/identity.css'
 
-/* M3 组件库（与 official-site 同源） */
-export * from './components/m3'
+/* M3 组件库：来自 @cloudery/m3-ui（与 official-site 同源，改一处全站生效） */
+export * from '@cloudery/m3-ui'
 
 /* 身份中心组件与页面 */
 export * from './components'

@@ -12,3 +12,8 @@ dist-lib
 .env
 .env.*
 !.env.example
+
+# 组件库产物与本地构建缓存
+packages/*/dist
+*.tsbuildinfo
+*.tgz

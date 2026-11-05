@@ -8,7 +8,7 @@ import IdDivider from '@/components/IdDivider.vue'
 import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
 import IdProviderButton from '@/components/identity/IdProviderButton.vue'
-import M3Button from '@/components/m3/M3Button.vue'
+import { M3Button } from '@cloudery/m3-ui'
 import { useSession } from '@/composables/useSession'
 import { identityApi, isApiError, type ExternalProvider } from '@/api/client'
 

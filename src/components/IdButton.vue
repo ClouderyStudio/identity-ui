@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { IconComponent } from '@/icons'
-import M3Button from '@/components/m3/M3Button.vue'
+import { M3Button } from '@cloudery/m3-ui'
 
 /**
  * 身份中心的按钮入口：直接复用官网页的 M3Button。

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import M3Icon from '@/components/m3/M3Icon.vue'
+import { M3Icon } from '@cloudery/m3-ui'
 import { resolveProviderGlyph } from './providerIcons'
 
 /**

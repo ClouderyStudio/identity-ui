@@ -1,5 +1,9 @@
-/* Material Design 3 样式入口。顺序有意义：令牌 → 基础 → 动效 → 身份中心补充层。 */
-@import '@fontsource-variable/roboto-flex';
+/* Material Design 3 样式入口。顺序有意义：库样式 → 配色 → 基础 → 动效 → 身份中心补充层。 */
+
+/* 组件库自带结构令牌（形状 / 字阶 / 海拔 / 动效 / 状态层）与组件样式 */
+@import '@cloudery/m3-ui/style.css';
+
+/* 配色：由本站点自己的种子生成，组件库不含配色 */
 @import './m3-color-tokens.css';
 @import './m3-foundations.css';
 @import './base.css';

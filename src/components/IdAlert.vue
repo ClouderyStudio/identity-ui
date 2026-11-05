@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { IconCheckCircle, IconClose, IconError, IconInfo, IconWarning, type IconComponent } from '@/icons'
-import M3Icon from '@/components/m3/M3Icon.vue'
-import M3IconButton from '@/components/m3/M3IconButton.vue'
+import { M3Icon, M3IconButton } from '@cloudery/m3-ui'
 
 /**
  * 行内提示：error / success / info / warning。

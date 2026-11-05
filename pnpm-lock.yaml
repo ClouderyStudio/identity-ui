@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@cloudery/m3-ui':
+        specifier: file:../m3-ui
+        version: file:../m3-ui(vue@3.5.44(typescript@6.0.3))
       vue:
         specifier: ^3.5.42
         version: 3.5.44(typescript@6.0.3)
@@ -70,6 +73,11 @@ packages:
   '@babel/types@7.29.11':
     resolution: {integrity: sha512-WCsemW40Cpc6gouC1SrY6PBaZ+oLRlEVY9XBvZBI7il/HyUrb2nJ505wE1MHEFyDZNnrWDEuy4jL50WVHfTTSQ==}
     engines: {node: '>=6.9.0'}
+
+  '@cloudery/m3-ui@file:../m3-ui':
+    resolution: {directory: ../m3-ui, type: directory}
+    peerDependencies:
+      vue: ^3.5.0
 
   '@fontsource-variable/roboto-flex@5.3.0':
     resolution: {integrity: sha512-bOxckUy0qXNRjhV6e4pcHGSvptix4ZRD1uaj5Za8h+p3qrb2GL4U4TQdpVmPSy0SmqwldfD+JJqEKdF68EyiAw==}
@@ -642,6 +650,10 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.29.11
       '@babel/helper-validator-identifier': 7.29.7
+
+  '@cloudery/m3-ui@file:../m3-ui(vue@3.5.44(typescript@6.0.3))':
+    dependencies:
+      vue: 3.5.44(typescript@6.0.3)
 
   '@fontsource-variable/roboto-flex@5.3.0': {}
 
