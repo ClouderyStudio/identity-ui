@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { IconKey, IconLink, IconSave } from '@/icons'
-import { M3Button, M3Divider, M3Icon, M3Switch } from '@cloudery/m3-ui'
+import { M3Button, M3Divider, M3Icon, M3Switch } from '@clderystd/m3-ui'
 import IdField from './IdField.vue'
 import IdSelect, { type SelectOption } from './identity/IdSelect.vue'
 

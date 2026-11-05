@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useId } from 'vue'
 import { IconClose, IconVisibility, IconVisibilityOff } from '@/icons'
-import { M3IconButton } from '@cloudery/m3-ui'
+import { M3IconButton } from '@clderystd/m3-ui'
 
 /**
  * 表单字段：MD3 filled text field。

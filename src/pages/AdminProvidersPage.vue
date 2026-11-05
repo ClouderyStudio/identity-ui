@@ -13,7 +13,7 @@ import {
   IconPerson,
   IconToggleOn,
 } from '@/icons'
-import { M3Button, M3Card, M3Chip, M3IconButton } from '@cloudery/m3-ui'
+import { M3Button, M3Card, M3Chip, M3IconButton } from '@clderystd/m3-ui'
 import IdAlert from '@/components/IdAlert.vue'
 import IdConfirmDialog, { type ConfirmOptions } from '@/components/identity/IdConfirmDialog.vue'
 import IdPageHeader from '@/components/identity/IdPageHeader.vue'

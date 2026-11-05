@@ -47,14 +47,16 @@ pnpm shots        # 用本机 Edge / Chrome 无头截图到 .review/（需先 pn
 
 ## 依赖的组件库
 
-M3 组件来自独立仓库 [m3-ui](../m3-ui)，发布为 `@cloudery/m3-ui`：
+M3 组件来自独立仓库 [m3-ui](../m3-ui)，发布为 `@clderystd/m3-ui`：
 
 - 本仓库只保留身份中心自己的组件与页面，不再有 M3 组件副本
 - 配色（`m3-color-tokens.css`）**留在站点**，组件库只带结构令牌 ——
   官方站用蓝色、scforge 用橙色，而组件代码只有一份
 
-本地联调时 `package.json` 用 `file:../m3-ui`。**注意 pnpm 的 `file:` 是复制语义**：
-改了组件源码要 `cd ../m3-ui && pnpm build`，再回到本仓库 `pnpm install` 才会生效。
+依赖来自 npm 公共 registry（`@clderystd/m3-ui@^0.1.0`），升级用 `pnpm update @clderystd/m3-ui`。
+
+本地联调组件库时，可在 `m3-ui` 里 `pnpm build && pnpm pack`，再在本仓库
+`pnpm add ../m3-ui/clderystd-m3-ui-0.1.0.tgz` 临时验证；验证完记得改回版本号。
 
 ## 目录
 

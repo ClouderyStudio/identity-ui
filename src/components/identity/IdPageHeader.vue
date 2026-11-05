@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { IconComponent } from '@/icons'
-import { M3Icon } from '@cloudery/m3-ui'
+import { M3Icon } from '@clderystd/m3-ui'
 
 /**
  * 页面标题区（后台 / 账户面板用）。

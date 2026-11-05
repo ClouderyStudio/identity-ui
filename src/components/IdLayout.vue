@@ -2,7 +2,7 @@
 import { provide } from 'vue'
 import { RouterLink } from 'vue-router'
 import { IconArrowOutward } from '@/icons'
-import { M3Icon } from '@cloudery/m3-ui'
+import { M3Icon } from '@clderystd/m3-ui'
 import IdBrand from './identity/IdBrand.vue'
 import IdBackground from './IdBackground.vue'
 import IdThemeToggle from './identity/IdThemeToggle.vue'

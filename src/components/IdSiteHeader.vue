@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import IdBrand from './identity/IdBrand.vue'
-import { M3TopAppBar } from '@cloudery/m3-ui'
+import { M3TopAppBar } from '@clderystd/m3-ui'
 
 /**
  * 站点页眉：品牌 + 右侧导航。

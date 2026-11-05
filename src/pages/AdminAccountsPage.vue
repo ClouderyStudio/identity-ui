@@ -14,7 +14,7 @@ import {
   IconRefresh,
   IconSearch,
 } from '@/icons'
-import { M3Button, M3Card, M3Chip, M3IconButton, M3Tooltip } from '@cloudery/m3-ui'
+import { M3Button, M3Card, M3Chip, M3IconButton, M3Tooltip } from '@clderystd/m3-ui'
 import IdAlert from '@/components/IdAlert.vue'
 import IdConfirmDialog, { type ConfirmOptions } from '@/components/identity/IdConfirmDialog.vue'
 import IdField from '@/components/IdField.vue'

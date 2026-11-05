@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import { IconBrightnessAuto, IconDarkMode, IconLightMode } from '@/icons'
 import { useTheme, type ThemeMode } from '@/composables/useTheme'
-import { M3IconButton, M3Tooltip } from '@cloudery/m3-ui'
-import { M3SegmentedButton, type IconComponent } from '@cloudery/m3-ui'
+import { M3IconButton, M3Tooltip } from '@clderystd/m3-ui'
+import { M3SegmentedButton, type IconComponent } from '@clderystd/m3-ui'
 
 /**
  * 主题切换：浅色 / 深色 / 跟随系统。

@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { IconArrowBack, IconOutbox } from '@/icons'
 import { RouterLink } from 'vue-router'
-import { M3Button, M3Icon } from '@cloudery/m3-ui'
+import { M3Button, M3Icon } from '@clderystd/m3-ui'
 import IdAlert from '@/components/IdAlert.vue'
 import IdCard from '@/components/IdCard.vue'
 import IdField from '@/components/IdField.vue'

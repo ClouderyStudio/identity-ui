@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@cloudery/m3-ui':
-        specifier: file:../m3-ui
-        version: file:../m3-ui(vue@3.5.44(typescript@6.0.3))
+      '@clderystd/m3-ui':
+        specifier: ^0.1.0
+        version: 0.1.0(vue@3.5.44(typescript@6.0.3))
       vue:
         specifier: ^3.5.42
         version: 3.5.44(typescript@6.0.3)
@@ -74,8 +74,8 @@ packages:
     resolution: {integrity: sha512-WCsemW40Cpc6gouC1SrY6PBaZ+oLRlEVY9XBvZBI7il/HyUrb2nJ505wE1MHEFyDZNnrWDEuy4jL50WVHfTTSQ==}
     engines: {node: '>=6.9.0'}
 
-  '@cloudery/m3-ui@file:../m3-ui':
-    resolution: {directory: ../m3-ui, type: directory}
+  '@clderystd/m3-ui@0.1.0':
+    resolution: {integrity: sha512-C/kb34Gkc4R6zAPE/jl6riFEGetTz0QGvydNcgIy4H/ShwEo5Z8A29AmKyLGAD9wEDeS16M1YnZFcH4/N6tIMQ==}
     peerDependencies:
       vue: ^3.5.0
 
@@ -651,7 +651,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.11
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@cloudery/m3-ui@file:../m3-ui(vue@3.5.44(typescript@6.0.3))':
+  '@clderystd/m3-ui@0.1.0(vue@3.5.44(typescript@6.0.3))':
     dependencies:
       vue: 3.5.44(typescript@6.0.3)
 

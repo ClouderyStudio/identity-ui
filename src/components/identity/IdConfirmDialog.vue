@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { M3Button, M3Dialog } from '@cloudery/m3-ui'
+import { M3Button, M3Dialog } from '@clderystd/m3-ui'
 
 /**
  * 确认对话框：**替代 window.confirm**。

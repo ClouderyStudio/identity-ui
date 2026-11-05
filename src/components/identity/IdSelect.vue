@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue'
 import { IconExpandMore } from '@/icons'
-import { M3Icon } from '@cloudery/m3-ui'
+import { M3Icon } from '@clderystd/m3-ui'
 
 /**
  * 下拉选择：MD3 filled select。

@@ -25,7 +25,7 @@
     "shots": "node scripts/screenshot.mjs"
   },
   "dependencies": {
-    "@cloudery/m3-ui": "file:../m3-ui",
+    "@clderystd/m3-ui": "^0.1.0",
     "vue": "^3.5.42",
     "vue-router": "^4.5.1"
   },

@@ -15,7 +15,7 @@ import {
   IconSwapHoriz,
   IconVerified,
 } from '@/icons'
-import { M3Avatar, M3Button, M3Card, M3Chip, M3Icon } from '@cloudery/m3-ui'
+import { M3Avatar, M3Button, M3Card, M3Chip, M3Icon } from '@clderystd/m3-ui'
 import IdAlert from '@/components/IdAlert.vue'
 import IdThemeToggle from '@/components/identity/IdThemeToggle.vue'
 import IdSiteShell from '@/components/IdSiteShell.vue'
