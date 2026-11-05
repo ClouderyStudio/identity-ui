@@ -1,2 +1,4 @@
+# 由 pnpm 自动维护：新发布的包会因 minimumReleaseAge（默认 24h）被拦，
+# 这里显式豁免，避免刚发版就装不上。不是 workspace 定义，本仓库不是 monorepo。
 minimumReleaseAgeExclude:
   - '@clderystd/m3-ui@0.1.0'
