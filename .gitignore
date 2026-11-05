@@ -1,6 +1,7 @@
 node_modules
 dist
 dist-mock
+dist-lib
 *.local
 .DS_Store
 

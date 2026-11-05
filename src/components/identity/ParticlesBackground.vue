@@ -141,7 +141,11 @@ onMounted(() => {
     ctx.clearRect(0, 0, size.w, size.h)
 
     for (let i = 0; i < circles.length; i++) {
+      // noUncheckedIndexedAccess 打开时下标访问是 Circle | undefined；
+      // 这里的数组长度在循环内可能因 reseed 变化，跳过一个空槽是安全且正确的。
       const circle = circles[i]
+      if (!circle) continue
+
       const offsetX = circle.translateX
       const offsetY = circle.translateY
 

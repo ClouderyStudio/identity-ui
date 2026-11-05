@@ -102,11 +102,21 @@ const year = new Date().getFullYear()
   background-color: var(--md-sys-color-surface);
 }
 
+/* 顶栏右侧：窄屏下导航必须能收缩，否则会把顶栏撑出视口（整页获得横向滚动） */
 .shell__nav {
   display: flex;
   align-items: center;
   gap: 2px;
   margin-inline-end: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  /* 窄屏只留图标按钮，文字版导航收进页面里的入口 */
+  .shell__nav :deep(.md-btn) {
+    display: none;
+  }
 }
 
 .shell__main {

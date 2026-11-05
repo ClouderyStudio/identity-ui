@@ -26,10 +26,10 @@
 ```bash
 pnpm dev          # 开发服务器（端口 5176，/identity 与 /connect 代理到 VITE_API_PROXY_TARGET）
 pnpm dev:mock     # 演示模式：内存假后端 + 示例数据，不连后端也能点（端口 5180）
-pnpm build        # 类型检查 + 生产构建（输出 dist/）
+pnpm build        # 类型检查 + 生产构建（站点，输出 dist/）
 pnpm build:mock   # 演示模式的静态构建（输出 dist-mock/）
-pnpm build:lib    # 可复用库（dist/identity-ui.js + dist/identity-ui.css）
-pnpm typecheck    # 只做类型检查
+pnpm build:lib    # 可复用库（输出 dist-lib/，与站点产物分开）
+pnpm typecheck    # 只做类型检查（vue-tsc -b，项目引用模式）
 pnpm shots        # 用本机 Edge / Chrome 无头截图到 .review/（需先 pnpm build && pnpm preview）
 ```
 

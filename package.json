@@ -5,13 +5,13 @@
   "type": "module",
   "description": "云术身份中心 UI：Material Design 3 的登录 / 注册 / 找回 / 改密 / 账户面板 / 管理后台",
   "files": [
-    "dist"
+    "dist-lib"
   ],
-  "main": "./dist/identity-ui.js",
-  "module": "./dist/identity-ui.js",
+  "main": "./dist-lib/identity-ui.js",
+  "module": "./dist-lib/identity-ui.js",
   "exports": {
-    ".": "./dist/identity-ui.js",
-    "./style.css": "./dist/identity-ui.css"
+    ".": "./dist-lib/identity-ui.js",
+    "./style.css": "./dist-lib/identity-ui.css"
   },
   "scripts": {
     "dev": "vite",
@@ -21,7 +21,7 @@
     "build:mock": "vue-tsc -b && vite build --mode mock",
     "preview:mock": "vite preview --outDir dist-mock --port 4173",
     "preview": "vite preview",
-    "typecheck": "vue-tsc --noEmit",
+    "typecheck": "vue-tsc -b",
     "shots": "node scripts/screenshot.mjs"
   },
   "dependencies": {

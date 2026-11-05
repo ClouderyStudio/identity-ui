@@ -58,6 +58,13 @@ export default defineConfig(({ mode }) => {
           },
           // 库里没有 <img> 引用，不把 public/ 的示例背景图一起发出去
           copyPublicDir: false,
+          /*
+           * 库产物输出到 dist-lib/，**不能**和站点产物共用 dist/。
+           * 两者共用会互相 emptyOutDir：先 pnpm build 再 pnpm build:lib，站点就被删没了；
+           * 反过来则库文件被删。分开之后谁也不会踩到谁。
+           */
+          outDir: 'dist-lib',
+          emptyOutDir: true,
         }
       : { outDir: isMock ? 'dist-mock' : 'dist', emptyOutDir: true },
   }
