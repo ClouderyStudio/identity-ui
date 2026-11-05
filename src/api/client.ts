@@ -182,6 +182,23 @@ export const identityApi = {
     }
   },
 
+  /**
+   * 确认绑定第三方身份。
+   *
+   * 不带任何参数：第三方身份由后端在一次真实回调后暂存（IExternalBindPendingStore），
+   * 这里只是「确认」它。后端刻意不接受客户端自报的身份——否则知道别人的 social_uid
+   * 就能抢绑。所以调用方只需要知道是哪个 provider。
+   *
+   * 失败语义（后端原文，不要改写）：
+   *   400 没有待确认的绑定 —— 票据已过期（默认 10 分钟）或压根没发起过
+   *   409 该第三方账号已被其他账号绑定
+   */
+  bindExternal(provider: string): Promise<unknown> {
+    return request('/identity/external/' + encodeURIComponent(provider) + '/bind', {
+      method: 'POST',
+    })
+  },
+
   /** 第三方登录：整页跳转（浏览器要经过上游授权页）。 */
   startExternalLogin(provider: string, returnUrl: string): void {
     const target = `${BASE}/identity/external/${encodeURIComponent(provider)}/challenge?returnUrl=${encodeURIComponent(returnUrl)}`

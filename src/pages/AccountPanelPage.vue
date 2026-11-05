@@ -19,7 +19,7 @@ import { M3Avatar, M3Button, M3Card, M3Chip, M3Icon } from '@clderystd/m3-ui'
 import IdAlert from '@/components/IdAlert.vue'
 import IdThemeToggle from '@/components/identity/IdThemeToggle.vue'
 import IdSiteShell from '@/components/IdSiteShell.vue'
-import { identityApi, type AccountProfile, type ExternalProvider } from '@/api/client'
+import { identityApi, isApiError, type AccountProfile, type ExternalProvider } from '@/api/client'
 import { useSession } from '@/composables/useSession'
 
 /**
@@ -50,7 +50,10 @@ const shortId = computed(() =>
   profile.value ? profile.value.id.replace(/-/g, '').slice(0, 8).toUpperCase() : '',
 )
 
-onMounted(load)
+onMounted(async () => {
+  await load()
+  await confirmPendingBind()
+})
 
 async function load() {
   loading.value = true
@@ -60,6 +63,40 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+/**
+ * 处理第三方回调带回来的 `?bind=<provider>`。
+ *
+ * 绑定是三段式：账户页点「绑定」→ 上游授权 → 回调落在**已登录**会话上时，
+ * 后端只把第三方身份暂存起来（IExternalBindPendingStore），然后 302 回 `/account?bind=github`。
+ * **真正写入绑定必须由这里再确认一次**——后端不接受客户端自报身份，
+ * 否则知道别人的 social_uid 就能抢绑。
+ *
+ * 曾经漏了这一步：回调成功、页面也回到了 `/account?bind=github`，但什么都没发生，
+ * 后端日志停在「等待确认绑定」，票据 10 分钟后静默过期。
+ */
+async function confirmPendingBind() {
+  const provider = new URLSearchParams(window.location.search).get('bind')
+  if (!provider) return
+
+  // 先清掉 query：否则用户刷新会重复提交，第二次必然报「没有待确认的绑定」，看起来像失败。
+  // 用 replaceState 而非 push，避免「后退」回到这个一次性地址。
+  const cleaned = new URL(window.location.href)
+  cleaned.searchParams.delete('bind')
+  window.history.replaceState({}, '', cleaned.pathname + cleaned.search + cleaned.hash)
+
+  try {
+    await identityApi.bindExternal(provider)
+    message.value = '绑定成功'
+  } catch (error) {
+    // 后端的 detail 已是可读中文，且能区分「票据过期」与「已被其他账号绑定」两种关键情形，
+    // 直接透出，不要加前缀把它盖住。
+    message.value = isApiError(error) ? error.detail : '绑定失败，请重试'
+  }
+
+  // 无论成败都重拉：成功要显示新绑定，失败也要让列表回到真实状态。
+  await load()
 }
 
 /** 时间统一按北京时间（UTC+8）展示。 */
