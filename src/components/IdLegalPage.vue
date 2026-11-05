@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { IconArrowBack } from '@/icons'
+import M3Button from '@/components/m3/M3Button.vue'
+import M3Icon from '@/components/m3/M3Icon.vue'
+import IdCard from './IdCard.vue'
 import IdLayout from './IdLayout.vue'
 
 /** 法务页面外壳：标题 + 生效日期 + 正文，排版窄栏便于阅读。 */
@@ -15,87 +19,136 @@ withDefaults(
 
 <template>
   <IdLayout>
-    <article class="legal">
-      <header class="legal__header">
-        <h1 class="legal__title">{{ title }}</h1>
-        <p class="legal__updated">最后更新：{{ updated }}</p>
-        <p v-if="intro" class="legal__intro">{{ intro }}</p>
-      </header>
+    <IdCard>
+      <template #header>
+        <RouterLink class="legal__back" to="/login">
+          <M3Icon :icon="IconArrowBack" :size="18" />
+          返回登录
+        </RouterLink>
+        <h1 class="legal__title md-typescale-headline-medium">{{ title }}</h1>
+        <p class="legal__updated md-typescale-body-small">最后更新：{{ updated }}</p>
+      </template>
 
-      <div class="legal__body">
+      <p v-if="intro" class="legal__intro md-typescale-body-large">{{ intro }}</p>
+
+      <div class="legal__body md-typescale-body-medium">
         <slot />
       </div>
 
-      <footer class="legal__footer">
-        <RouterLink to="/login" class="legal__back">返回登录</RouterLink>
-      </footer>
-    </article>
+      <template #footer>
+        <div class="legal__footer">
+          <span>如对本文档有疑问，可通过站点公布的联络方式联系我们。</span>
+          <M3Button variant="text" size="sm" :href="'/privacy'">隐私政策</M3Button>
+        </div>
+      </template>
+    </IdCard>
   </IdLayout>
 </template>
 
 <style scoped>
-.legal {
-  max-width: var(--id-card-width);
+.legal__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  margin-block-end: 12px;
+  padding: 4px 8px 4px 4px;
+  border-radius: var(--md-sys-shape-corner-full);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  text-decoration: none;
+  transition:
+    background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.legal__back:hover {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-primary);
 }
 
 .legal__title {
-  font-size: var(--id-font-title);
-  font-weight: 600;
-  color: var(--id-text);
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
 }
 
 .legal__updated {
-  margin-top: var(--id-space-1);
-  font-size: var(--id-font-small);
-  color: var(--id-text-faint);
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
+/* 法务长文用 680px 的阅读宽度，而不是登录卡片的 480px */
 .legal__intro {
-  margin-top: var(--id-space-4);
-  font-size: var(--id-font-body);
-  color: var(--id-text-muted);
-  line-height: 1.75;
+  margin: 0 0 20px;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .legal__body {
-  margin-top: var(--id-space-5);
-  font-size: var(--id-font-body);
-  color: var(--id-text-body);
-  line-height: 1.8;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.75;
 }
 
 .legal__body :deep(h2) {
-  margin: var(--id-space-5) 0 var(--id-space-2);
-  font-size: var(--id-font-body);
-  font-weight: 600;
-  color: var(--id-text);
+  margin: 24px 0 8px;
+  color: var(--md-sys-color-primary);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+}
+
+.legal__body :deep(h3) {
+  margin: 16px 0 6px;
+  color: var(--md-sys-color-on-surface);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
 }
 
 .legal__body :deep(p) {
-  margin: 0 0 var(--id-space-3);
+  margin: 0 0 12px;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .legal__body :deep(ul) {
-  margin: 0 0 var(--id-space-3);
-  padding-left: 1.25em;
+  margin: 0 0 12px;
+  padding-inline-start: 20px;
+  list-style: disc;
 }
 
 .legal__body :deep(li) {
-  margin-bottom: var(--id-space-1);
+  margin-block-end: 6px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.legal__body :deep(li::marker) {
+  color: var(--md-sys-color-primary);
+}
+
+.legal__body :deep(strong) {
+  color: var(--md-sys-color-on-surface);
+  font-weight: 600;
 }
 
 .legal__body :deep(a) {
-  color: var(--id-accent);
+  color: var(--md-sys-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal__body :deep(code) {
+  padding: 1px 6px;
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  background-color: var(--md-sys-color-surface-container-highest);
+  font-family: var(--md-ref-typeface-mono);
+  font-size: 0.92em;
 }
 
 .legal__footer {
-  margin-top: var(--id-space-6);
-  padding-top: var(--id-space-4);
-  border-top: 1px solid var(--id-border);
-}
-
-.legal__back {
-  font-size: var(--id-font-small);
-  color: var(--id-accent);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 </style>

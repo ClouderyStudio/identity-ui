@@ -1,4 +1,6 @@
-/* 基础重置与排版：只做这一层需要的事，不引入 reset 库 */
+/*
+ * Base layer: reset, document shell, focus, state layers and shared M3 utilities.
+ */
 
 *,
 *::before,
@@ -6,63 +8,280 @@
   box-sizing: border-box;
 }
 
-html,
-body {
+* {
   margin: 0;
-  padding: 0;
-  height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
-  font-family: var(--id-font-family);
-  font-size: var(--id-font-body);
-  line-height: 1.6;
-  color: var(--id-text-body);
-  background: var(--id-bg-base);
+  min-height: 100dvh;
+  font-family: var(--md-ref-typeface-plain);
+  font-size: var(--md-sys-typescale-body-large-size);
+  line-height: var(--md-sys-typescale-body-large-line-height);
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  transition: background-color var(--id-transition), color var(--id-transition);
+  -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard),
+    color var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
-/* 主题切换时整页过渡，避免闪白 */
-body,
-body * {
-  transition-property: background-color, border-color, color, box-shadow;
-  transition-duration: var(--id-transition);
-  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+/*
+ * Semantic surfaces.
+ *
+ * A card that should read one step "above" the page: the container scale
+ * inverts between modes, so the brightest step is surface-container-lowest in
+ * light and surface-container-low in dark.
+ */
+:root {
+  --site-surface-raised: var(--md-sys-color-surface-container-lowest);
+}
+
+.dark {
+  --site-surface-raised: var(--md-sys-color-surface-container-low);
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+a {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
 }
 
 h1,
 h2,
 h3,
-p {
-  margin: 0;
+h4,
+h5,
+h6 {
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
 }
 
-a {
-  color: var(--id-accent);
-  text-decoration: none;
-  transition: color var(--id-transition);
+::selection {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
 }
 
-a:hover {
-  color: var(--id-accent-strong);
+/* ---------- Scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant) transparent;
 }
 
-button {
-  font: inherit;
-  color: inherit;
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-/* 键盘焦点可见：只在键盘操作时出现，不打扰鼠标用户 */
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-full);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--md-sys-color-outline);
+}
+
+/* ---------- Focus indicator (MD3: 3dp secondary outline, 2dp offset) ---------- */
+:focus {
+  outline: none;
+}
+
 :focus-visible {
-  outline: 2px solid var(--id-accent);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: var(--md-sys-state-focus-indicator-thickness) solid var(--md-sys-color-secondary);
+  outline-offset: var(--md-sys-state-focus-indicator-outer-offset);
+  border-radius: var(--md-sys-shape-corner-extra-small);
 }
 
-/* 屏幕阅读器专用文本 */
-.id-sr-only {
+/* ---------- Layout ---------- */
+.md-container {
+  width: 100%;
+  max-width: var(--md-sys-page-max-width);
+  margin-inline: auto;
+  padding-inline: var(--md-sys-page-gutter);
+}
+
+.md-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- State layer ---------- */
+.md-state-layer {
+  position: relative;
+  isolation: isolate;
+}
+
+.md-state-layer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  z-index: 1;
+}
+
+@media (hover: hover) {
+  .md-state-layer:hover::after {
+    opacity: var(--md-sys-state-hover-state-layer-opacity);
+  }
+}
+
+.md-state-layer:focus-visible::after {
+  opacity: var(--md-sys-state-focus-state-layer-opacity);
+}
+
+.md-state-layer:active::after {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+/* ---------- Ripple ---------- */
+.md-ripple-host {
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.md-ripple {
+  position: absolute;
+  border-radius: var(--md-sys-shape-corner-full);
+  background-color: currentColor;
+  opacity: 0.12;
+  transform: scale(0);
+  animation: md-ripple-in var(--md-sys-motion-duration-long2) var(--md-sys-motion-easing-standard-decelerate)
+    forwards;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes md-ripple-in {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* ---------- Divider ---------- */
+.md-divider {
+  height: 1px;
+  border: 0;
+  background-color: var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+}
+
+/* ---------- Non-interactive tag ---------- */
+.md-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding-inline: 10px;
+  border-radius: var(--md-sys-shape-corner-small);
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-size: var(--md-sys-typescale-label-small-size);
+  font-weight: var(--md-sys-typescale-label-small-weight);
+  letter-spacing: var(--md-sys-typescale-label-small-tracking);
+  white-space: nowrap;
+}
+
+.md-tag--outlined {
+  background-color: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-outline-variant);
+}
+
+/* ---------- Scroll reveal ---------- */
+/* Travel, scale and blur are tunable per element through --md-reveal-y /
+   --md-reveal-scale (set by the v-reveal directive). */
+.md-reveal {
+  opacity: 0;
+  transform: translate3d(0, var(--md-reveal-y, 40px), 0) scale(var(--md-reveal-scale, 0.98));
+  transition:
+    opacity var(--md-sys-motion-duration-extra-long1) var(--md-sys-motion-easing-emphasized-decelerate),
+    transform var(--md-sys-motion-duration-extra-long1) var(--md-sys-motion-easing-emphasized-decelerate);
+  will-change: opacity, transform;
+}
+
+.md-reveal--blur {
+  filter: blur(12px);
+  transition:
+    opacity var(--md-sys-motion-duration-extra-long2)
+      var(--md-sys-motion-easing-emphasized-decelerate),
+    transform var(--md-sys-motion-duration-extra-long2)
+      var(--md-sys-motion-easing-emphasized-decelerate),
+    filter var(--md-sys-motion-duration-extra-long1)
+      var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
+.md-reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+  /* Drop the compositing hint once the entrance is over. */
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Trim, never delete: keep a shorter slide and a lighter blur so the
+     entrance is still legible with animation effects switched off. */
+  .md-reveal {
+    transform: translate3d(0, var(--md-reveal-y, 16px), 0);
+  }
+
+  .md-reveal--blur {
+    filter: blur(6px);
+  }
+}
+
+/* ---------- Accessibility ---------- */
+.sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -74,21 +293,43 @@ button {
   border: 0;
 }
 
-/* 跳过导航：键盘用户第一个 Tab 就能跳过表单装饰 */
-.id-skip-link {
+.md-skip-link {
   position: absolute;
-  left: var(--id-space-4);
-  top: var(--id-space-4);
-  padding: var(--id-space-2) var(--id-space-4);
-  background: var(--id-surface-strong);
-  border: 1px solid var(--id-border-strong);
-  border-radius: var(--id-radius-pill);
-  color: var(--id-text);
+  top: 8px;
+  left: 8px;
+  z-index: 2000;
   transform: translateY(-200%);
-  transition: transform var(--id-transition);
-  z-index: 10;
+  padding: 12px 20px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: var(--md-sys-typescale-label-large-weight);
+  transition: transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.id-skip-link:focus-visible {
+.md-skip-link:focus-visible {
   transform: translateY(0);
+}
+
+:target {
+  scroll-margin-top: calc(var(--md-sys-top-app-bar-height) + 24px);
+}
+
+/* ---------- Scrim (dialogs and sheets) ---------- */
+.md-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background-color: color-mix(in srgb, var(--md-sys-color-scrim) 32%, transparent);
+}
+
+.md-scrim-enter-active,
+.md-scrim-leave-active {
+  transition: opacity var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-standard);
+}
+
+.md-scrim-enter-from,
+.md-scrim-leave-to {
+  opacity: 0;
 }

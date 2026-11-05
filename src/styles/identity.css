@@ -1,0 +1,103 @@
+/*
+ * 身份中心补充层。
+ *
+ * 设计系统本身完全来自 official-site 的 MD3 令牌（m3-color-tokens / m3-foundations）；
+ * 这里只补三类东西：
+ *   1. 卡片表面：MD3 没有「带模糊的浮动卡片」这个角色，但身份页的背景是一张插画，
+ *      需要一层半透明容器把文字从背景里拎出来 —— 用 surface-container 混合 + backdrop blur，
+ *      明暗两套由 .dark 切换，颜色仍全部来自 M3 角色。
+ *   2. 布局宽度：登录类页面窄栏、后台类页面宽栏。
+ *   3. 少量排版工具：渐变标题、等宽编号。
+ */
+
+:root {
+  /* 亮色：容器色压在白卡之上，容器刻度在亮色下是「越亮越高」 */
+  --id-surface-card: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 88%, transparent);
+  --id-surface-card-solid: var(--md-sys-color-surface-container-lowest);
+  /* 页面最外层的底色（背景图之下的兜底） */
+  --id-surface-page: var(--md-sys-color-surface);
+
+  /*
+   * 右侧毛玻璃面板的表面色。
+   * 模糊会把背景压成一片平均色，这里再叠一层很薄的 surface，
+   * 让正文在「磨砂后的风景」上仍然达到对比度要求 —— 不是遮罩，图片不会被压暗。
+   */
+  --id-panel-surface: color-mix(in srgb, var(--md-sys-color-surface) 62%, transparent);
+
+  --id-content-narrow: 480px;
+  --id-content-reading: 760px;
+  --id-content-wide: 1200px;
+}
+
+.dark {
+  --id-surface-card: color-mix(in srgb, var(--md-sys-color-surface-container-low) 88%, transparent);
+  --id-surface-card-solid: var(--md-sys-color-surface-container-low);
+  --id-surface-page: var(--md-sys-color-surface);
+  /* 深色下不透明度略低一点：模糊后的暗部本来就好读，太实会显得板结 */
+  --id-panel-surface: color-mix(in srgb, var(--md-sys-color-surface) 55%, transparent);
+}
+
+/* ---------- 容器 ---------- */
+.id-page {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--md-sys-page-gutter);
+}
+
+.id-page--narrow {
+  max-width: var(--id-content-narrow);
+}
+
+.id-page--reading {
+  max-width: var(--id-content-reading);
+}
+
+.id-page--wide {
+  max-width: var(--id-content-wide);
+}
+
+/* ---------- 排版工具 ---------- */
+/* 渐变强调字：和官网页的 SectionHeading 同一套做法，颜色全部取自 M3 角色 */
+.id-gradient-text {
+  background-image: linear-gradient(
+    100deg,
+    var(--md-sys-color-primary) 0%,
+    var(--md-sys-color-tertiary) 28%,
+    var(--md-sys-color-primary) 55%,
+    var(--md-sys-color-tertiary) 80%,
+    var(--md-sys-color-primary) 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: md-gradient-pan 9s var(--md-sys-motion-easing-linear) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* 只停掉持续循环的装饰动效，一次性入场照常播放 */
+  .id-gradient-text {
+    animation: none;
+  }
+}
+
+.id-mono {
+  font-family: var(--md-ref-typeface-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* 供屏幕阅读器播报、但视觉不占位（base.css 已有 .sr-only，这里给一个身份中心的前缀别名） */
+.id-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

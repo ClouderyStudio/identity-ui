@@ -1,97 +1,139 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { IconCheckCircle, IconClose, IconError, IconInfo, IconWarning, type IconComponent } from '@/icons'
+import M3Icon from '@/components/m3/M3Icon.vue'
+import M3IconButton from '@/components/m3/M3IconButton.vue'
+
 /**
  * 行内提示：error / success / info / warning。
+ *
+ * MD3 没有「告警条」这个组件，官方给的做法是容器 + 语义色；
+ * 这里用容器角色上色（error-container / primary-container …），正文用对应的 on-* 角色，
+ * 明暗两套主题下的对比度由令牌自己保证。
+ *
  * role 按级别区分：错误用 alert（立即播报），其余用 status（礼貌播报）。
  */
-withDefaults(
+const props = withDefaults(
   defineProps<{
     variant?: 'error' | 'success' | 'info' | 'warning'
     /** 标题；不传时只有正文。 */
     title?: string
+    /** 允许用户手动关闭。 */
+    dismissible?: boolean
   }>(),
-  { variant: 'info', title: '' },
+  { variant: 'info', title: '', dismissible: false },
 )
+
+const emit = defineEmits<{ dismiss: [] }>()
+
+const glyph = computed<IconComponent>(() => {
+  switch (props.variant) {
+    case 'error':
+      return IconError
+    case 'success':
+      return IconCheckCircle
+    case 'warning':
+      return IconWarning
+    default:
+      return IconInfo
+  }
+})
 </script>
 
 <template>
   <div
-    class="id-alert"
-    :class="`id-alert--${variant}`"
-    :role="variant === 'error' ? 'alert' : 'status'"
-    :aria-live="variant === 'error' ? 'assertive' : 'polite'"
+    class="alert"
+    :class="'alert--' + props.variant"
+    :role="props.variant === 'error' ? 'alert' : 'status'"
+    :aria-live="props.variant === 'error' ? 'assertive' : 'polite'"
   >
-    <span class="id-alert__icon" aria-hidden="true">
-      <svg v-if="variant === 'error'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v6M12 16.5v.5" stroke-linecap="round" />
-      </svg>
-      <svg v-else-if="variant === 'success'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M8 12.5l2.5 2.5L16 9.5" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-      <svg v-else-if="variant === 'warning'" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 3l9.5 17h-19L12 3z" stroke-linejoin="round" />
-        <path d="M12 9v5M12 17v.5" stroke-linecap="round" />
-      </svg>
-      <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 11v6M12 7.5v.5" stroke-linecap="round" />
-      </svg>
-    </span>
-    <div class="id-alert__content">
-      <p v-if="title" class="id-alert__title">{{ title }}</p>
-      <div class="id-alert__body"><slot /></div>
+    <M3Icon :icon="glyph" :size="20" class="alert__icon" />
+    <div class="alert__content">
+      <p v-if="props.title" class="alert__title md-typescale-title-small">{{ props.title }}</p>
+      <div class="alert__body md-typescale-body-medium"><slot /></div>
     </div>
+    <M3IconButton
+      v-if="props.dismissible"
+      :icon="IconClose"
+      label="关闭提示"
+      size="sm"
+      class="alert__close"
+      @click="emit('dismiss')"
+    />
   </div>
 </template>
 
 <style scoped>
-.id-alert {
+.alert {
   display: flex;
-  gap: var(--id-space-3);
-  padding: var(--id-space-3) var(--id-space-4);
-  border-radius: var(--id-radius-field);
-  border: 1px solid transparent;
-  font-size: var(--id-font-small);
-  line-height: 1.55;
-}
-
-.id-alert__icon {
-  display: inline-flex;
   align-items: flex-start;
-  padding-top: 2px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  animation: md-fade-up var(--md-sys-motion-duration-medium2)
+    var(--md-sys-motion-easing-emphasized-decelerate) both;
 }
 
-.id-alert__content {
+.alert__icon {
+  margin-block-start: 2px;
+}
+
+.alert__content {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.id-alert__title {
-  font-weight: 600;
-  margin-bottom: 2px;
+.alert__title {
+  margin: 0;
 }
 
-.id-alert--error {
-  background: var(--id-danger-soft);
-  border-color: color-mix(in srgb, var(--id-danger) 34%, transparent);
-  color: var(--id-danger);
+.alert__body {
+  line-height: 1.6;
 }
 
-.id-alert--success {
-  background: var(--id-success-soft);
-  border-color: color-mix(in srgb, var(--id-success) 34%, transparent);
-  color: var(--id-success);
+.alert__body :deep(p) {
+  margin: 0;
 }
 
-.id-alert--warning {
-  background: var(--id-warning-soft);
-  border-color: color-mix(in srgb, var(--id-warning) 34%, transparent);
-  color: var(--id-warning);
+.alert__body :deep(a) {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.id-alert--info {
-  background: var(--id-accent-soft);
-  border-color: color-mix(in srgb, var(--id-accent) 30%, transparent);
-  color: var(--id-text-body);
+.alert__close {
+  margin: -4px -8px -4px 0;
+}
+
+/* ---------- 语义配色 ---------- */
+.alert--error {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.alert--success {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.alert--warning {
+  background-color: color-mix(in srgb, var(--md-sys-color-tertiary-container) 88%, transparent);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.alert--info {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.alert--success .alert__icon {
+  color: var(--md-sys-color-primary);
+}
+
+.alert--warning .alert__icon {
+  color: var(--md-sys-color-tertiary);
 }
 </style>

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
 import { computed, reactive, ref } from 'vue'
+import { RouterLink } from 'vue-router'
+import { IconCheckCircle, IconLinkOff } from '@/icons'
+import M3Button from '@/components/m3/M3Button.vue'
+import M3Icon from '@/components/m3/M3Icon.vue'
 import IdAlert from '@/components/IdAlert.vue'
-import IdButton from '@/components/IdButton.vue'
 import IdCard from '@/components/IdCard.vue'
 import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
+import IdStrengthMeter from '@/components/identity/IdStrengthMeter.vue'
 import { identityApi, isApiError } from '@/api/client'
 
 /**
@@ -15,7 +18,6 @@ import { identityApi, isApiError } from '@/api/client'
  * 不要让用户反复点「重试」。
  */
 const props = withDefaults(defineProps<{ token?: string }>(), { token: '' })
-
 
 const form = reactive({ next: '', confirm: '' })
 const errors = reactive({ next: '', confirm: '' })
@@ -58,32 +60,50 @@ async function submit() {
   <IdLayout>
     <IdCard>
       <template #header>
-        <h1 class="id-card-title">重置密码</h1>
-        <p class="id-card-subtitle">设置一个新的登录密码</p>
+        <h1 class="title md-typescale-headline-medium">重置密码</h1>
+        <p class="subtitle md-typescale-body-medium">设置一个新的登录密码。</p>
       </template>
 
-      <IdAlert v-if="tokenMissing" variant="error" title="链接无效">
-        这个链接缺少必要的参数，请重新申请找回密码。
-      </IdAlert>
+      <!-- 链接失效 -->
+      <div v-if="tokenMissing" class="state">
+        <span class="state__icon state__icon--error" aria-hidden="true">
+          <M3Icon :icon="IconLinkOff" :size="28" />
+        </span>
+        <h2 class="state__title md-typescale-title-large">链接无效</h2>
+        <p class="state__text md-typescale-body-medium">
+          这个链接缺少必要的参数，请重新申请找回密码。
+        </p>
+        <M3Button block href="/forgot">重新申请</M3Button>
+      </div>
 
-      <IdAlert v-else-if="success" variant="success" title="密码已重置">
-        请使用新密码登录。
-      </IdAlert>
+      <!-- 重置成功 -->
+      <div v-else-if="success" class="state">
+        <span class="state__icon" aria-hidden="true">
+          <M3Icon :icon="IconCheckCircle" :size="28" />
+        </span>
+        <h2 class="state__title md-typescale-title-large">密码已重置</h2>
+        <p class="state__text md-typescale-body-medium">请使用新密码登录。</p>
+        <M3Button block href="/login">去登录</M3Button>
+      </div>
 
-      <form v-else class="id-form" novalidate @submit.prevent="submit">
-        <IdField
-          v-model="form.next"
-          label="新密码"
-          type="password"
-          autocomplete="new-password"
-          revealable
-          required
-          hint="至少 8 位"
-          :error="errors.next"
-        />
+      <form v-else class="form" novalidate @submit.prevent="submit">
+        <div class="password-block">
+          <IdField
+            v-model="form.next"
+            label="新密码"
+            placeholder="至少 8 位"
+            type="password"
+            autocomplete="new-password"
+            revealable
+            required
+            :error="errors.next"
+          />
+          <IdStrengthMeter v-if="form.next" :value="form.next" />
+        </div>
         <IdField
           v-model="form.confirm"
           label="确认新密码"
+          placeholder="再次输入新密码"
           type="password"
           autocomplete="new-password"
           revealable
@@ -91,44 +111,81 @@ async function submit() {
           :error="errors.confirm"
         />
 
-        <IdAlert v-if="formError" variant="error">{{ formError }}</IdAlert>
+        <IdAlert v-if="formError" variant="error" title="重置未完成">{{ formError }}</IdAlert>
 
-        <IdButton type="submit" block :loading="submitting">保存新密码</IdButton>
+        <M3Button type="submit" block size="lg" :loading="submitting">保存新密码</M3Button>
       </form>
 
       <template #footer>
-        <RouterLink class="id-link" to="/login">返回登录</RouterLink>
+        <RouterLink class="footer-link" to="/login">返回登录</RouterLink>
       </template>
     </IdCard>
   </IdLayout>
 </template>
 
 <style scoped>
-.id-card-title {
-  font-size: var(--id-font-subtitle);
-  font-weight: 600;
-  color: var(--id-text);
+.title {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
 }
 
-.id-card-subtitle {
-  margin-top: var(--id-space-1);
-  font-size: var(--id-font-body);
-  color: var(--id-text-muted);
+.subtitle {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
-.id-form {
+.form {
   display: flex;
   flex-direction: column;
-  gap: var(--id-space-4);
-  margin-top: var(--id-space-5);
+  gap: 16px;
 }
 
-.id-link {
-  padding: 0;
-  font-size: var(--id-font-small);
-  color: var(--id-accent);
-  background: none;
-  border: none;
-  cursor: pointer;
+.password-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.state__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.state__icon--error {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.state__title {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.state__text {
+  margin: 0 0 8px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.footer-link {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 </style>

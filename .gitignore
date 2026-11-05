@@ -1,8 +1,11 @@
 node_modules
 dist
-dist-demo
+dist-mock
 *.local
 .DS_Store
+
+# 视觉核对的产物，不入库
+.review
 
 # 环境变量：真实文件不入库（可能含 API 地址之外的凭据），只保留模板
 .env

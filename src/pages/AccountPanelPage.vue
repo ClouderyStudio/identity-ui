@@ -1,19 +1,39 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import {
+  IconEvent,
+  IconHistory,
+  IconHub,
+  IconKey,
+  IconLock,
+  IconLogout,
+  IconManageAccounts,
+  IconPerson,
+  IconSecurity,
+  IconShield,
+  IconSwapHoriz,
+  IconVerified,
+} from '@/icons'
+import M3Avatar from '@/components/m3/M3Avatar.vue'
+import M3Button from '@/components/m3/M3Button.vue'
+import M3Card from '@/components/m3/M3Card.vue'
+import M3Chip from '@/components/m3/M3Chip.vue'
+import M3Icon from '@/components/m3/M3Icon.vue'
+import M3ListItem from '@/components/m3/M3ListItem.vue'
 import IdAlert from '@/components/IdAlert.vue'
-import IdButton from '@/components/IdButton.vue'
+import IdPageHeader from '@/components/identity/IdPageHeader.vue'
+import IdThemeToggle from '@/components/identity/IdThemeToggle.vue'
 import IdSiteShell from '@/components/IdSiteShell.vue'
-import IdThemeToggle from '@/components/IdThemeToggle.vue'
 import { identityApi, type AccountProfile, type ExternalProvider } from '@/api/client'
 import { useSession } from '@/composables/useSession'
 
 /**
- * 账户面板（Dashboard）：全屏布局，参考 Natayark 账户中心的结构。
+ * 账户面板（Dashboard）：全屏布局。
  *
- *   顶部身份条（头像 / 欢迎语 / 编号 / 邮箱）
- *   左列：资料卡（UID、状态、注册时间、最近登录、绑定邮箱、登录方式）+ 设置
- *   右列：可用登录方式、已绑定账号
+ *   身份 Hero（头像 / 欢迎语 / 编号 / 邮箱 / 状态）
+ *   左列：账户资料（UID、状态、注册时间、最近登录、绑定邮箱、登录方式）+ 设置
+ *   右列：可用的登录方式、已绑定账号
  *
  * 数据来自 GET /identity/account/profile（服务端会话 Cookie 鉴权）。
  */
@@ -32,7 +52,9 @@ const unbound = computed(() => {
 })
 
 /** UID 展示成短编号；完整 GUID 放在 title 里，避免长串撑坏排版。 */
-const shortId = computed(() => (profile.value ? profile.value.id.replace(/-/g, '').slice(0, 8).toUpperCase() : ''))
+const shortId = computed(() =>
+  profile.value ? profile.value.id.replace(/-/g, '').slice(0, 8).toUpperCase() : '',
+)
 
 onMounted(load)
 
@@ -58,20 +80,15 @@ function formatTime(value?: string | null): string {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
     hour12: false,
   })
-}
-
-function initials(name?: string): string {
-  return (name ?? '?').trim().slice(0, 1).toUpperCase()
 }
 
 async function unbind(provider: string) {
   message.value = ''
   busy.value = provider
   try {
-    const response = await fetch(`/identity/external/${encodeURIComponent(provider)}`, {
+    const response = await fetch('/identity/external/' + encodeURIComponent(provider), {
       method: 'DELETE',
       credentials: 'include',
     })
@@ -94,142 +111,192 @@ async function logout() {
   session.clear()
   await router.replace('/login')
 }
+
+const facts = computed(() => {
+  const current = profile.value
+  if (!current) return []
+  return [
+    { icon: IconPerson, label: 'UID', value: shortId.value, mono: true, title: current.id },
+    { icon: IconVerified, label: '账户状态', value: current.hasLocalPassword ? '正常' : '仅第三方登录' },
+    { icon: IconEvent, label: '注册时间', value: formatTime(current.createdAt) },
+    { icon: IconHistory, label: '最近登录', value: formatTime(current.lastLoginAt) },
+    { icon: IconHub, label: '绑定邮箱', value: current.email || '未绑定' },
+    {
+      icon: IconKey,
+      label: '登录方式',
+      value: current.hasLocalPassword ? '密码 + 第三方' : '仅第三方',
+    },
+  ]
+})
 </script>
 
 <template>
   <IdSiteShell>
     <template #nav>
-      <span class="nav-user">{{ profile?.username ?? '' }}</span>
-      <button
+      <span v-if="profile" class="nav-user md-typescale-label-large">{{ profile.username }}</span>
+      <M3Button
         v-if="profile?.isAdmin"
-        type="button"
-        class="nav-action"
+        variant="text"
+        size="sm"
+        :icon="IconManageAccounts"
         @click="router.push('/admin/accounts')"
       >
         管理后台
-      </button>
-      <button type="button" class="nav-action" @click="logout">退出登录</button>
+      </M3Button>
+      <M3Button variant="text" size="sm" :icon="IconLogout" @click="logout">退出登录</M3Button>
     </template>
 
-    <p v-if="loading" class="loading">加载中…</p>
+    <p v-if="loading" class="loading md-typescale-body-medium">加载中…</p>
 
     <IdAlert v-else-if="!profile" variant="info" title="尚未登录">
       请先登录后查看账户信息。
     </IdAlert>
 
     <template v-else>
-      <!-- 身份条 -->
-      <section class="identity">
-        <span class="identity__avatar" aria-hidden="true">{{ initials(profile.username) }}</span>
-        <div class="identity__text">
-          <h1 class="identity__title">
+      <!-- 身份 Hero -->
+      <section class="hero">
+        <div class="hero__avatar">
+          <M3Avatar :src="profile.avatar ?? undefined" :name="profile.username" :size="88" ring />
+        </div>
+
+        <div class="hero__text">
+          <p class="hero__eyebrow md-typescale-label-medium">账户中心</p>
+          <h1 class="hero__title md-typescale-headline-medium">
             欢迎回来，{{ profile.username }}
-            <span class="identity__id">#{{ shortId }}</span>
           </h1>
-          <p class="identity__meta">{{ profile.email || '未绑定邮箱' }}</p>
+          <p class="hero__meta md-typescale-body-medium">
+            <span class="hero__id id-mono" :title="profile.id">#{{ shortId }}</span>
+            <span class="hero__dot" aria-hidden="true">·</span>
+            <span>{{ profile.email || '未绑定邮箱' }}</span>
+          </p>
+        </div>
+
+        <div class="hero__badges">
+          <M3Chip
+            variant="assist"
+            :icon="IconShield"
+            :label="profile.hasLocalPassword ? '账号状态正常' : '仅第三方登录'"
+          />
+          <M3Chip v-if="profile.isAdmin" variant="assist" :icon="IconSecurity" label="管理员" />
         </div>
       </section>
 
       <div class="grid">
         <!-- 左列 -->
         <div class="column">
-          <section class="panel">
-            <h2 class="panel__title">账户资料</h2>
+          <M3Card variant="filled" shape="large" class="panel">
+            <h2 class="panel__title md-typescale-title-medium">
+              <M3Icon :icon="IconPerson" :size="20" />
+              账户资料
+            </h2>
+
             <dl class="facts">
-              <div class="fact">
-                <dt>UID</dt>
-                <dd class="fact__mono" :title="profile.id">{{ shortId }}</dd>
-              </div>
-              <div class="fact">
-                <dt>账户状态</dt>
-                <dd>
-                  <span class="status" :class="profile.hasLocalPassword ? 'is-ok' : 'is-partial'">
-                    {{ profile.hasLocalPassword ? '正常' : '仅第三方登录' }}
-                  </span>
+              <div v-for="fact in facts" :key="fact.label" class="fact">
+                <dt class="fact__label md-typescale-body-small">
+                  <M3Icon :icon="fact.icon" :size="16" />
+                  {{ fact.label }}
+                </dt>
+                <dd
+                  class="fact__value md-typescale-body-large"
+                  :class="{ 'id-mono': fact.mono }"
+                  :title="fact.title"
+                >
+                  {{ fact.value }}
                 </dd>
               </div>
-              <div class="fact">
-                <dt>注册时间</dt>
-                <dd>{{ formatTime(profile.createdAt) }}</dd>
-              </div>
-              <div class="fact">
-                <dt>最后登录时间</dt>
-                <dd>{{ formatTime(profile.lastLoginAt) }}</dd>
-              </div>
-              <div class="fact">
-                <dt>绑定邮箱</dt>
-                <dd>{{ profile.email || '未绑定' }}</dd>
-              </div>
-              <div class="fact">
-                <dt>登录方式</dt>
-                <dd>{{ profile.hasLocalPassword ? '密码 + 第三方' : '仅第三方' }}</dd>
-              </div>
             </dl>
-          </section>
+          </M3Card>
 
-          <section class="panel">
-            <h2 class="panel__title">设置</h2>
-            <div class="settings">
-              <div class="settings__group">
-                <span class="settings__label">账户安全</span>
-                <div class="settings__actions">
-                  <IdButton variant="secondary" size="sm" @click="router.push('/password')">修改密码</IdButton>
-                </div>
+          <M3Card variant="filled" shape="large" class="panel">
+            <h2 class="panel__title md-typescale-title-medium">
+              <M3Icon :icon="IconLock" :size="20" />
+              设置
+            </h2>
+
+            <div class="setting">
+              <div class="setting__text">
+                <p class="setting__name md-typescale-body-large">账户安全</p>
+                <p class="setting__hint md-typescale-body-small">定期更换密码，不要与其他站点复用。</p>
               </div>
-              <div class="settings__group">
-                <span class="settings__label">应用主题</span>
-                <IdThemeToggle />
-              </div>
+              <M3Button
+                variant="tonal"
+                size="sm"
+                :icon="IconKey"
+                @click="router.push('/password')"
+              >
+                修改密码
+              </M3Button>
             </div>
-          </section>
+
+            <div class="setting">
+              <div class="setting__text">
+                <p class="setting__name md-typescale-body-large">应用主题</p>
+                <p class="setting__hint md-typescale-body-small">浅色 / 深色 / 跟随系统。</p>
+              </div>
+              <IdThemeToggle variant="segmented" />
+            </div>
+          </M3Card>
         </div>
 
         <!-- 右列 -->
         <div class="column">
-          <section class="panel">
-            <h2 class="panel__title">可用于登录本账号的方式</h2>
-            <p v-if="!profile.bindings.length && !unbound.length" class="muted">还没有配置任何第三方登录方式。</p>
-            <ul v-else class="bindings">
+          <M3Card variant="filled" shape="large" class="panel">
+            <h2 class="panel__title md-typescale-title-medium">
+              <M3Icon :icon="IconHub" :size="20" />
+              可用于登录本账号的方式
+            </h2>
+
+            <ul class="bindings">
               <li v-for="binding in profile.bindings" :key="binding.provider" class="binding">
-                <span class="binding__main">
-                  <span class="binding__name">{{ binding.providerName }}</span>
-                  <span class="binding__time">绑定于 {{ formatTime(binding.createdAt) }}</span>
-                </span>
-                <IdButton
-                  variant="secondary"
+                <M3Avatar :name="binding.providerName" :size="40" />
+                <div class="binding__text">
+                  <p class="binding__name md-typescale-body-large">{{ binding.providerName }}</p>
+                  <p class="binding__time md-typescale-body-small">
+                    绑定于 {{ formatTime(binding.createdAt) }}
+                  </p>
+                </div>
+                <M3Button
+                  variant="text"
                   size="sm"
                   :loading="busy === binding.provider"
                   @click="unbind(binding.provider)"
                 >
                   解绑
-                </IdButton>
+                </M3Button>
               </li>
+
               <li v-if="profile.hasLocalPassword" class="binding">
-                <span class="binding__main">
-                  <span class="binding__name">账号密码</span>
-                  <span class="binding__time">已设置</span>
-                </span>
-                <IdButton variant="secondary" size="sm" @click="router.push('/password')">修改</IdButton>
+                <M3Avatar :name="profile.username" :size="40" />
+                <div class="binding__text">
+                  <p class="binding__name md-typescale-body-large">账号密码</p>
+                  <p class="binding__time md-typescale-body-small">已设置</p>
+                </div>
+                <M3Button variant="text" size="sm" @click="router.push('/password')">修改</M3Button>
               </li>
             </ul>
 
             <template v-if="unbound.length">
-              <p class="muted">还可绑定：</p>
+              <p class="panel__subtitle md-typescale-body-small">还可绑定：</p>
               <div class="providers">
-                <button
+                <M3Chip
                   v-for="provider in unbound"
                   :key="provider.name"
-                  type="button"
-                  class="provider"
+                  variant="assist"
+                  :icon="IconSwapHoriz"
+                  :label="provider.displayName"
                   @click="identityApi.startExternalLogin(provider.name, '/account')"
-                >
-                  {{ provider.displayName }}
-                </button>
+                />
               </div>
             </template>
-          </section>
 
-          <IdAlert v-if="message" variant="info">{{ message }}</IdAlert>
+            <p v-if="!profile.bindings.length && !unbound.length" class="panel__subtitle md-typescale-body-small">
+              还没有配置任何第三方登录方式。
+            </p>
+          </M3Card>
+
+          <IdAlert v-if="message" variant="info" dismissible @dismiss="message = ''">
+            {{ message }}
+          </IdAlert>
         </div>
       </div>
     </template>
@@ -238,171 +305,178 @@ async function logout() {
 
 <style scoped>
 .nav-user {
-  padding: 0 var(--id-space-2);
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
-}
-
-.nav-action {
-  padding: 5px 12px;
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color var(--id-transition), color var(--id-transition);
-}
-
-.nav-action:hover {
-  color: var(--id-text);
-  background: var(--id-surface-hover);
+  padding-inline: 8px;
+  color: var(--md-sys-color-on-surface-variant);
+  white-space: nowrap;
 }
 
 .loading {
-  color: var(--id-text-muted);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
-/* 身份条 */
-.identity {
+/* ---------- Hero ---------- */
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  margin-block-end: 24px;
+  padding: 24px;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background-color: var(--md-sys-color-surface-container-low);
+  animation: md-fade-up var(--md-sys-motion-duration-extra-long1)
+    var(--md-sys-motion-easing-emphasized-decelerate) both;
+}
+
+.hero__avatar {
+  flex-shrink: 0;
+}
+
+.hero__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.hero__eyebrow {
+  margin: 0;
+  color: var(--md-sys-color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.hero__title {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.hero__meta {
   display: flex;
   align-items: center;
-  gap: var(--id-space-4);
-  padding: var(--id-space-5) 0 var(--id-space-4);
+  gap: 8px;
+  margin: 2px 0 0;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
-.identity__avatar {
-  display: inline-flex;
+.hero__id {
+  color: var(--md-sys-color-primary);
+}
+
+.hero__dot {
+  opacity: 0.5;
+}
+
+.hero__badges {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--id-accent-soft);
-  border: 1px solid var(--id-border-strong);
-  color: var(--id-accent);
-  font-size: 26px;
-  font-weight: 600;
+  gap: 8px;
 }
 
-.identity__title {
-  font-size: var(--id-font-subtitle);
-  font-weight: 600;
-  color: var(--id-text);
-}
-
-.identity__id {
-  font-size: var(--id-font-body);
-  font-weight: 400;
-  color: var(--id-text-muted);
-}
-
-.identity__meta {
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
-}
-
-/* 两列栅格 */
+/* ---------- Grid ---------- */
 .grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: var(--id-space-4);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 16px;
   align-items: start;
 }
 
 .column {
   display: flex;
   flex-direction: column;
-  gap: var(--id-space-4);
+  gap: 16px;
 }
 
-.panel {
-  padding: var(--id-space-5);
-  background: var(--id-surface);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-card);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
+.panel :deep(.md-card__content) {
+  gap: 16px;
 }
 
 .panel__title {
-  margin-bottom: var(--id-space-4);
-  font-size: var(--id-font-body);
-  font-weight: 600;
-  color: var(--id-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
 }
 
+.panel__title :deep(svg) {
+  color: var(--md-sys-color-primary);
+}
+
+.panel__subtitle {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ---------- Facts ---------- */
 .facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--id-space-4);
+  gap: 16px;
   margin: 0;
 }
 
-.fact dt {
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-.fact dd {
-  margin: 2px 0 0;
-  font-size: var(--id-font-body);
-  color: var(--id-text);
+.fact__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.fact__label :deep(svg) {
+  color: var(--md-sys-color-primary);
+  opacity: 0.85;
+}
+
+.fact__value {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
   word-break: break-word;
 }
 
-.fact__mono {
-  font-family: 'Cascadia Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
-}
-
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.status::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.status.is-ok {
-  color: var(--id-success);
-}
-
-.status.is-partial {
-  color: var(--id-warning);
-}
-
-.settings {
+/* ---------- Settings ---------- */
+.setting {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--id-space-6);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background-color: var(--md-sys-color-surface-container-high);
 }
 
-.settings__group {
+.setting__text {
   display: flex;
   flex-direction: column;
-  gap: var(--id-space-2);
+  gap: 2px;
+  min-width: 0;
 }
 
-.settings__label {
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
+.setting__name {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
 }
 
-.settings__actions {
-  display: flex;
-  gap: var(--id-space-2);
+.setting__hint {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
+/* ---------- Bindings ---------- */
 .bindings {
   display: flex;
   flex-direction: column;
-  gap: var(--id-space-2);
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -411,67 +485,44 @@ async function logout() {
 .binding {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--id-space-3);
-  padding: var(--id-space-3);
-  background: var(--id-surface-sunken);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-field);
+  gap: 12px;
+  padding: 8px 8px 8px 12px;
+  border-radius: var(--md-sys-shape-corner-large);
+  background-color: var(--md-sys-color-surface-container-high);
+  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.binding__main {
+.binding__text {
   display: flex;
   flex-direction: column;
+  gap: 0;
   min-width: 0;
+  flex: 1;
 }
 
 .binding__name {
-  font-size: var(--id-font-body);
-  color: var(--id-text);
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
 }
 
 .binding__time {
-  font-size: var(--id-font-small);
-  color: var(--id-text-faint);
-}
-
-.muted {
-  margin-top: var(--id-space-3);
-  font-size: var(--id-font-small);
-  color: var(--id-text-faint);
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .providers {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--id-space-2);
-  margin-top: var(--id-space-2);
-}
-
-.provider {
-  height: 30px;
-  padding: 0 var(--id-space-3);
-  font-size: var(--id-font-small);
-  font-weight: 600;
-  color: var(--id-text);
-  background: var(--id-surface-sunken);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-field);
-  cursor: pointer;
-}
-
-.provider:hover {
-  background: var(--id-surface-hover);
-  border-color: var(--id-text-muted);
+  gap: 8px;
 }
 
 @media (max-width: 900px) {
   .grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .facts {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>

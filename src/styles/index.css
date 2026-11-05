@@ -1,0 +1,7 @@
+/* Material Design 3 样式入口。顺序有意义：令牌 → 基础 → 动效 → 身份中心补充层。 */
+@import '@fontsource-variable/roboto-flex';
+@import './m3-color-tokens.css';
+@import './m3-foundations.css';
+@import './base.css';
+@import './motion.css';
+@import './identity.css';

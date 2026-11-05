@@ -1,10 +1,32 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import {
+  IconAdd,
+  IconBlock,
+  IconCheckCircle,
+  IconDomain,
+  IconKey,
+  IconLink,
+  IconLogout,
+  IconManageAccounts,
+  IconPerson,
+  IconRefresh,
+  IconSearch,
+} from '@/icons'
+import M3Button from '@/components/m3/M3Button.vue'
+import M3Card from '@/components/m3/M3Card.vue'
+import M3Chip from '@/components/m3/M3Chip.vue'
+import M3Dialog from '@/components/m3/M3Dialog.vue'
+import M3IconButton from '@/components/m3/M3IconButton.vue'
+import M3Switch from '@/components/m3/M3Switch.vue'
+import M3Tooltip from '@/components/m3/M3Tooltip.vue'
 import IdAlert from '@/components/IdAlert.vue'
-import IdButton from '@/components/IdButton.vue'
+import IdConfirmDialog, { type ConfirmOptions } from '@/components/identity/IdConfirmDialog.vue'
+import IdField from '@/components/IdField.vue'
+import IdPageHeader from '@/components/identity/IdPageHeader.vue'
+import IdSelect, { type SelectOption } from '@/components/identity/IdSelect.vue'
 import IdSiteShell from '@/components/IdSiteShell.vue'
-import IdThemeToggle from '@/components/IdThemeToggle.vue'
 import {
   identityAdminApi,
   isApiError,
@@ -38,6 +60,12 @@ const notice = ref('')
 const tempPassword = ref<{ username: string; value: string } | null>(null)
 const busy = ref('')
 
+const confirmRef = ref<InstanceType<typeof IdConfirmDialog> | null>(null)
+
+async function askConfirm(options: ConfirmOptions): Promise<boolean> {
+  return (await confirmRef.value?.ask(options)) ?? false
+}
+
 /* ===== 建号 ===== */
 const creating = ref(false)
 const createForm = ref({ username: '', email: '', password: '' })
@@ -56,6 +84,17 @@ const bindingProviders = ref<string[]>([])
 const bindingLoading = ref(false)
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+
+const roleOptions: SelectOption[] = [
+  { value: '', label: '普通用户' },
+  { value: 'member', label: 'member' },
+  { value: 'admin', label: 'admin' },
+]
+
+const siteRoleOptions: SelectOption[] = [
+  { value: '', label: '无职权' },
+  { value: 'admin', label: 'admin' },
+]
 
 onMounted(load)
 
@@ -83,7 +122,7 @@ async function submitCreate() {
       email: createForm.value.email.trim() || null,
       password: createForm.value.password,
     })
-    notice.value = `账号 ${username} 已创建。请把口令转告本人，并提醒其登录后立即修改。`
+    notice.value = '账号 ' + username + ' 已创建。请把口令转告本人，并提醒其登录后立即修改。'
     creating.value = false
     page.value = 1
     await load()
@@ -98,9 +137,15 @@ async function submitCreate() {
 async function toggleStatus(account: AdminAccount) {
   const disabling = account.status !== 'disabled'
   if (disabling) {
-    const ok = window.confirm(
-      `确定停用「${account.username}」吗？\n\n停用后该账号立即无法登录，已登录的会话也会立刻失效。数据不会删除，随时可以重新启用。`,
-    )
+    const ok = await askConfirm({
+      title: '停用「' + account.username + '」？',
+      body: [
+        '停用后该账号立即无法登录，已登录的会话也会立刻失效。',
+        '数据不会删除，随时可以重新启用。',
+      ],
+      confirmLabel: '停用账号',
+      danger: true,
+    })
     if (!ok) return
   }
 
@@ -109,7 +154,7 @@ async function toggleStatus(account: AdminAccount) {
   notice.value = ''
   try {
     await identityAdminApi.setStatus(account.id, disabling ? 'disabled' : 'active')
-    notice.value = disabling ? `已停用 ${account.username}` : `已启用 ${account.username}`
+    notice.value = disabling ? '已停用 ' + account.username : '已启用 ' + account.username
     await load()
   } catch (caught) {
     error.value = isApiError(caught) ? caught.detail : '操作失败'
@@ -154,8 +199,8 @@ async function setSiteRole(account: AdminAccount, site: string, role: string) {
     roleBySite.value = next
     notice.value =
       role === ''
-        ? `已撤销 ${account.username} 在 ${site} 的职权`
-        : `已授予 ${account.username} 在 ${site} 的 ${role} 职权`
+        ? '已撤销 ' + account.username + ' 在 ' + site + ' 的职权'
+        : '已授予 ' + account.username + ' 在 ' + site + ' 的 ' + role + ' 职权'
   } catch (caught) {
     error.value = isApiError(caught) ? caught.detail : '修改失败'
   } finally {
@@ -186,9 +231,12 @@ async function toggleBindings(account: AdminAccount) {
 }
 
 async function unbind(account: AdminAccount, provider: string) {
-  const ok = window.confirm(
-    `确定解绑「${account.username}」的 ${provider} 登录吗？\n\n若这是该账号唯一的登录方式，服务端会拒绝这次解绑。`,
-  )
+  const ok = await askConfirm({
+    title: '解绑「' + account.username + '」的 ' + provider + ' 登录？',
+    body: '若这是该账号唯一的登录方式，服务端会拒绝这次解绑。',
+    confirmLabel: '解绑',
+    danger: true,
+  })
   if (!ok) return
 
   busy.value = account.id + ':unbind:' + provider
@@ -196,7 +244,7 @@ async function unbind(account: AdminAccount, provider: string) {
   notice.value = ''
   try {
     await identityAdminApi.unbind(account.id, provider)
-    notice.value = `已解绑 ${provider}`
+    notice.value = '已解绑 ' + provider
     const detail = await identityAdminApi.account(account.id)
     bindingProviders.value = detail.providers
     await load()
@@ -241,7 +289,7 @@ async function changeRole(account: AdminAccount, role: string) {
   notice.value = ''
   try {
     await identityAdminApi.setRole(account.id, role === '' ? null : role)
-    notice.value = `已将 ${account.username} 的角色改为 ${role || '普通用户'}`
+    notice.value = '已将 ' + account.username + ' 的角色改为 ' + (role || '普通用户')
     await load()
   } catch (caught) {
     error.value = isApiError(caught) ? caught.detail : '修改失败'
@@ -251,9 +299,12 @@ async function changeRole(account: AdminAccount, role: string) {
 }
 
 async function resetPassword(account: AdminAccount) {
-  const ok = window.confirm(
-    `确定重置「${account.username}」的口令吗？\n\n原口令将立即失效，系统会生成一次性临时口令。`,
-  )
+  const ok = await askConfirm({
+    title: '重置「' + account.username + '」的口令？',
+    body: '原口令将立即失效，系统会生成一次性临时口令。',
+    confirmLabel: '重置口令',
+    danger: true,
+  })
   if (!ok) return
 
   busy.value = account.id + ':reset'
@@ -308,522 +359,482 @@ async function logout() {
 <template>
   <IdSiteShell>
     <template #nav>
-      <button type="button" class="nav-action" @click="router.push('/account')">我的账户</button>
-      <button type="button" class="nav-action" @click="router.push('/admin/providers')">登录方式</button>
-      <IdThemeToggle />
-      <button type="button" class="nav-action" @click="logout">退出登录</button>
+      <M3Button variant="text" size="sm" :icon="IconPerson" @click="router.push('/account')">
+        我的账户
+      </M3Button>
+      <M3Button variant="text" size="sm" :icon="IconLink" @click="router.push('/admin/providers')">
+        登录方式
+      </M3Button>
+      <M3IconButton :icon="IconLogout" label="退出登录" @click="logout" />
     </template>
 
-    <header class="head">
-      <div>
-        <h1 class="head__title">账号管理</h1>
-        <p class="head__sub">共 {{ total }} 个账号 · 第 {{ page }} / {{ totalPages }} 页</p>
-      </div>
-      <div class="head__actions">
-        <form class="search" @submit.prevent="search">
-          <input
-            v-model="keyword"
-            class="search__input"
-            type="search"
-            placeholder="搜索用户名 / 邮箱 / 身份标识"
-            aria-label="搜索账号"
-          />
-          <IdButton type="submit" size="sm">搜索</IdButton>
-        </form>
-        <IdButton size="sm" @click="toggleCreate">
+    <IdPageHeader
+      title="账号管理"
+      eyebrow="管理后台"
+      :icon="IconManageAccounts"
+      :description="'共 ' + total + ' 个账号 · 第 ' + page + ' / ' + totalPages + ' 页'"
+    >
+      <template #actions>
+        <M3Button :icon="creating ? undefined : IconAdd" @click="toggleCreate">
           {{ creating ? '取消' : '新建账号' }}
-        </IdButton>
-      </div>
-    </header>
+        </M3Button>
+        <M3IconButton :icon="IconRefresh" label="刷新列表" @click="load" />
+      </template>
+    </IdPageHeader>
 
-    <section v-if="creating" class="create">
-      <h2 class="create__title">新建账号</h2>
-      <p class="create__hint">
+    <!-- 检索栏：MD3 把搜索放在内容区的第一行，而不是挤进标题栏 -->
+    <div class="toolbar">
+      <form class="toolbar__search" @submit.prevent="search">
+        <IdField
+          v-model="keyword"
+          label="搜索账号"
+          placeholder="用户名 / 邮箱 / 身份标识"
+          inputmode="search"
+          clearable
+        />
+        <M3Button type="submit" variant="tonal" :icon="IconSearch">搜索</M3Button>
+      </form>
+    </div>
+
+    <M3Card v-if="creating" variant="filled" shape="large" class="create">
+      <h2 class="create__title md-typescale-title-medium">新建账号</h2>
+      <p class="create__hint md-typescale-body-medium">
         注册走邮箱验证码；收不到信的人由管理员在这里开号。口令强度与自助注册同一套，
         建出来的账号默认可用、<strong>无任何站点职权</strong>。
       </p>
       <form class="create__form" @submit.prevent="submitCreate">
-        <label class="create__field">
-          <span>用户名</span>
-          <input v-model="createForm.username" class="create__input" type="text" required />
-        </label>
-        <label class="create__field">
-          <span>邮箱（可空）</span>
-          <input v-model="createForm.email" class="create__input" type="email" />
-        </label>
-        <label class="create__field">
-          <span>初始口令</span>
-          <input v-model="createForm.password" class="create__input" type="text" required />
-        </label>
-        <IdButton type="submit" size="sm" :loading="busy === 'create'">创建</IdButton>
+        <IdField v-model="createForm.username" label="用户名" placeholder="登录名" required />
+        <IdField v-model="createForm.email" label="邮箱（可空）" type="email" placeholder="example@example.com" />
+        <IdField v-model="createForm.password" label="初始口令" placeholder="转告本人后请提醒其修改" required />
+        <M3Button type="submit" :loading="busy === 'create'">创建</M3Button>
       </form>
-    </section>
+    </M3Card>
 
-    <IdAlert v-if="tempPassword" variant="warning" title="临时口令（只显示这一次）">
+    <IdAlert v-if="tempPassword" variant="warning" title="临时口令（只显示这一次）" dismissible @dismiss="tempPassword = null">
       <p class="temp">
         <strong>{{ tempPassword.username }}</strong> 的新临时口令：
         <code class="temp__value">{{ tempPassword.value }}</code>
       </p>
       <p class="temp__hint">请立刻转告用户，并提醒其登录后立即修改口令。关闭本提示后将无法再次查看。</p>
       <div class="temp__actions">
-        <IdButton size="sm" @click="copyTempPassword">复制口令</IdButton>
-        <IdButton variant="secondary" size="sm" @click="tempPassword = null">我已记下，关闭</IdButton>
+        <M3Button size="sm" variant="tonal" @click="copyTempPassword">复制口令</M3Button>
+        <M3Button size="sm" variant="text" @click="tempPassword = null">我已记下</M3Button>
       </div>
     </IdAlert>
 
-    <IdAlert v-if="error" variant="error" title="操作未完成">{{ error }}</IdAlert>
-    <IdAlert v-if="notice" variant="info">{{ notice }}</IdAlert>
+    <div class="alerts">
+      <IdAlert v-if="error" variant="error" title="操作未完成" dismissible @dismiss="error = ''">
+        {{ error }}
+      </IdAlert>
+      <IdAlert v-if="notice" variant="success" dismissible @dismiss="notice = ''">{{ notice }}</IdAlert>
+    </div>
 
-    <p v-if="loading" class="loading">加载中…</p>
+    <p v-if="loading" class="loading md-typescale-body-medium">加载中…</p>
+
+    <IdAlert v-else-if="!accounts.length" variant="info" title="没有匹配的账号">
+      换个关键词试试，或清空搜索查看全部。
+    </IdAlert>
 
     <template v-else>
-      <IdAlert v-if="!accounts.length" variant="info" title="没有匹配的账号">
-        换个关键词试试，或清空搜索查看全部。
-      </IdAlert>
+      <M3Card variant="filled" shape="large" class="table-card">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">账号</th>
+                <th scope="col">状态</th>
+                <th scope="col">邮箱</th>
+                <th scope="col">登录方式</th>
+                <th scope="col">角色（OIDC）</th>
+                <th scope="col">注册 / 最近登录</th>
+                <th scope="col">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="account in accounts" :key="account.id">
+                <tr :class="{ 'row--disabled': account.status === 'disabled' }">
+                  <td>
+                    <span class="cell-name md-typescale-body-large">{{ account.username }}</span>
+                    <span class="cell-id id-mono" :title="account.id">#{{ shortId(account.id) }}</span>
+                  </td>
+                  <td>
+                    <M3Chip
+                      variant="assist"
+                      :icon="account.status === 'disabled' ? IconBlock : IconCheckCircle"
+                      :label="account.status === 'disabled' ? '已停用' : '正常'"
+                    />
+                  </td>
+                  <td class="cell-muted">{{ account.email || '未绑定' }}</td>
+                  <td>
+                    <div class="chips">
+                      <M3Chip
+                        variant="assist"
+                        :icon="account.hasPassword ? IconKey : IconBlock"
+                        :label="account.hasPassword ? '口令（' + (account.passwordAlgorithm ?? '未知') + '）' : '无口令'"
+                      />
+                      <M3Chip
+                        v-if="account.bindingCount"
+                        variant="assist"
+                        :icon="IconLink"
+                        :label="'第三方 ×' + account.bindingCount"
+                      />
+                    </div>
+                  </td>
+                  <td>
+                    <IdSelect
+                      class="role-select"
+                      :model-value="account.role ?? ''"
+                      :options="roleOptions"
+                      label="角色"
+                      :disabled="busy === account.id + ':role'"
+                      @update:model-value="(value) => changeRole(account, value)"
+                    />
+                  </td>
+                  <td class="cell-muted">
+                    <div>{{ formatTime(account.createdAt) }}</div>
+                    <div>{{ formatTime(account.lastLoginAt) }}</div>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <M3Tooltip text="重置口令" placement="top">
+                        <M3IconButton
+                          :icon="IconKey"
+                          label="重置口令"
+                          variant="tonal"
+                          size="sm"
+                          :disabled="busy === account.id + ':reset'"
+                          @click="resetPassword(account)"
+                        />
+                      </M3Tooltip>
 
-      <div v-else class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr>
-              <th scope="col">账号</th>
-              <th scope="col">状态</th>
-              <th scope="col">邮箱</th>
-              <th scope="col">登录方式</th>
-              <th scope="col">角色（OIDC）</th>
-              <th scope="col">注册 / 最近登录</th>
-              <th scope="col">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="account in accounts" :key="account.id">
-            <tr :class="{ 'row--disabled': account.status === 'disabled' }">
-              <td>
-                <span class="name">{{ account.username }}</span>
-                <span class="mono" :title="account.id">#{{ shortId(account.id) }}</span>
-              </td>
-              <td>
-                <span class="tag" :class="account.status === 'disabled' ? 'tag--danger' : 'tag--ok'">
-                  {{ account.status === 'disabled' ? '已停用' : '正常' }}
-                </span>
-              </td>
-              <td class="muted">{{ account.email || '未绑定' }}</td>
-              <td>
-                <span class="tag" :class="account.hasPassword ? 'tag--ok' : 'tag--warn'">
-                  {{ account.hasPassword ? `口令（${account.passwordAlgorithm}）` : '无口令' }}
-                </span>
-                <span v-if="account.bindingCount" class="tag">第三方 ×{{ account.bindingCount }}</span>
-              </td>
-              <td>
-                <select
-                  class="select"
-                  :value="account.role ?? ''"
-                  :disabled="busy === account.id + ':role'"
-                  :aria-label="`修改 ${account.username} 的角色`"
-                  @change="changeRole(account, ($event.target as HTMLSelectElement).value)"
-                >
-                  <option value="">普通用户</option>
-                  <option value="member">member</option>
-                  <option value="admin">admin</option>
-                </select>
-              </td>
-              <td class="muted">
-                <div>{{ formatTime(account.createdAt) }}</div>
-                <div>{{ formatTime(account.lastLoginAt) }}</div>
-              </td>
-              <td class="actions">
-                <IdButton
-                  variant="secondary"
-                  size="sm"
-                  :loading="busy === account.id + ':reset'"
-                  @click="resetPassword(account)"
-                >
-                  重置口令
-                </IdButton>
-                <IdButton variant="secondary" size="sm" @click="toggleRoles(account)">
-                  {{ rolePanelFor === account.id ? '收起职权' : '站点职权' }}
-                </IdButton>
-                <IdButton
-                  v-if="account.bindingCount"
-                  variant="secondary"
-                  size="sm"
-                  @click="toggleBindings(account)"
-                >
-                  {{ bindingPanelFor === account.id ? '收起绑定' : '绑定' }}
-                </IdButton>
-                <IdButton
-                  :variant="account.status === 'disabled' ? 'primary' : 'secondary'"
-                  size="sm"
-                  :loading="busy === account.id + ':status'"
-                  @click="toggleStatus(account)"
-                >
-                  {{ account.status === 'disabled' ? '启用' : '停用' }}
-                </IdButton>
-              </td>
-            </tr>
+                      <M3Tooltip :text="rolePanelFor === account.id ? '收起站点职权' : '站点职权'" placement="top">
+                        <M3IconButton
+                          :icon="IconDomain"
+                          :label="rolePanelFor === account.id ? '收起站点职权' : '站点职权'"
+                          :variant="rolePanelFor === account.id ? 'filled' : 'outlined'"
+                          size="sm"
+                          @click="toggleRoles(account)"
+                        />
+                      </M3Tooltip>
 
-            <tr v-if="rolePanelFor === account.id" class="panel-row">
-              <td colspan="7">
-                <div class="panel">
-                  <p class="panel__title">站点职权</p>
-                  <p class="panel__hint">
-                    只授予该站点后台的访问权。<strong>能进这个页面 ≠ 能管所有站</strong>：
-                    一个人可以只在某一个站是管理员。撤销即取消该站权限，立即生效。
-                  </p>
-                  <p v-if="roleLoading" class="muted">加载中…</p>
-                  <div v-else class="panel__grid">
-                    <label v-for="site in roleSites" :key="site" class="panel__field">
-                      <span class="mono">{{ site }}</span>
-                      <select
-                        class="select"
-                        :value="roleBySite[site] ?? ''"
-                        :disabled="roleBusy === account.id + ':' + site"
-                        :aria-label="`设置 ${account.username} 在 ${site} 的职权`"
-                        @change="setSiteRole(account, site, ($event.target as HTMLSelectElement).value)"
+                      <M3Tooltip v-if="account.bindingCount" text="第三方绑定" placement="top">
+                        <M3IconButton
+                          :icon="IconLink"
+                          label="第三方绑定"
+                          :variant="bindingPanelFor === account.id ? 'filled' : 'outlined'"
+                          size="sm"
+                          @click="toggleBindings(account)"
+                        />
+                      </M3Tooltip>
+
+                      <M3Tooltip
+                        :text="account.status === 'disabled' ? '启用账号' : '停用账号'"
+                        placement="top"
                       >
-                        <option value="">无职权</option>
-                        <option value="admin">admin</option>
-                      </select>
-                    </label>
-                  </div>
-                </div>
-              </td>
-            </tr>
+                        <M3IconButton
+                          :icon="account.status === 'disabled' ? IconCheckCircle : IconBlock"
+                          :label="account.status === 'disabled' ? '启用账号' : '停用账号'"
+                          :variant="account.status === 'disabled' ? 'filled' : 'standard'"
+                          size="sm"
+                          :disabled="busy === account.id + ':status'"
+                          @click="toggleStatus(account)"
+                        />
+                      </M3Tooltip>
+                    </div>
+                  </td>
+                </tr>
 
-            <tr v-if="bindingPanelFor === account.id" class="panel-row">
-              <td colspan="7">
-                <div class="panel">
-                  <p class="panel__title">第三方绑定</p>
-                  <p class="panel__hint">
-                    解绑后该方式不能再用来登录。若这是账号<strong>唯一</strong>的登录方式，
-                    服务端会拒绝解绑（否则本人既没有口令、也收不到找回邮件）。
-                  </p>
-                  <p v-if="bindingLoading" class="muted">加载中…</p>
-                  <p v-else-if="!bindingProviders.length" class="muted">没有已绑定的第三方。</p>
-                  <ul v-else class="panel__list">
-                    <li v-for="provider in bindingProviders" :key="provider" class="panel__item">
-                      <span class="mono">{{ provider }}</span>
-                      <IdButton
-                        variant="secondary"
-                        size="sm"
-                        :loading="busy === account.id + ':unbind:' + provider"
-                        @click="unbind(account, provider)"
-                      >
-                        解绑
-                      </IdButton>
-                    </li>
-                  </ul>
-                </div>
-              </td>
-            </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
+                <tr v-if="rolePanelFor === account.id" class="panel-row">
+                  <td colspan="7">
+                    <div class="panel">
+                      <p class="panel__title md-typescale-title-small">站点职权</p>
+                      <p class="panel__hint md-typescale-body-small">
+                        只授予该站点后台的访问权。<strong>能进这个页面 ≠ 能管所有站</strong>：
+                        一个人可以只在某一个站是管理员。撤销即取消该站权限，立即生效。
+                      </p>
+                      <p v-if="roleLoading" class="cell-muted">加载中…</p>
+                      <div v-else class="panel__grid">
+                        <div v-for="site in roleSites" :key="site" class="panel__field">
+                          <span class="panel__site id-mono">{{ site }}</span>
+                          <IdSelect
+                            class="role-select"
+                            :model-value="roleBySite[site] ?? ''"
+                            :options="siteRoleOptions"
+                            label="职权"
+                            :disabled="roleBusy === account.id + ':' + site"
+                            @update:model-value="(value) => setSiteRole(account, site, value)"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr v-if="bindingPanelFor === account.id" class="panel-row">
+                  <td colspan="7">
+                    <div class="panel">
+                      <p class="panel__title md-typescale-title-small">第三方绑定</p>
+                      <p class="panel__hint md-typescale-body-small">
+                        解绑后该方式不能再用来登录。若这是账号<strong>唯一</strong>的登录方式，
+                        服务端会拒绝解绑（否则本人既没有口令、也收不到找回邮件）。
+                      </p>
+                      <p v-if="bindingLoading" class="cell-muted">加载中…</p>
+                      <p v-else-if="!bindingProviders.length" class="cell-muted">没有已绑定的第三方。</p>
+                      <ul v-else class="panel__list">
+                        <li v-for="provider in bindingProviders" :key="provider" class="panel__item">
+                          <span class="id-mono">{{ provider }}</span>
+                          <M3Button
+                            variant="outlined"
+                            size="sm"
+                            :loading="busy === account.id + ':unbind:' + provider"
+                            @click="unbind(account, provider)"
+                          >
+                            解绑
+                          </M3Button>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </M3Card>
 
       <nav v-if="totalPages > 1" class="pager" aria-label="分页">
-        <IdButton variant="secondary" size="sm" :disabled="page <= 1" @click="goPage(page - 1)">上一页</IdButton>
-        <span class="pager__text">{{ page }} / {{ totalPages }}</span>
-        <IdButton variant="secondary" size="sm" :disabled="page >= totalPages" @click="goPage(page + 1)">
+        <M3Button variant="outlined" size="sm" :disabled="page <= 1" @click="goPage(page - 1)">上一页</M3Button>
+        <span class="pager__text md-typescale-label-large">{{ page }} / {{ totalPages }}</span>
+        <M3Button variant="outlined" size="sm" :disabled="page >= totalPages" @click="goPage(page + 1)">
           下一页
-        </IdButton>
+        </M3Button>
       </nav>
     </template>
+
+    <IdConfirmDialog ref="confirmRef" />
   </IdSiteShell>
 </template>
 
 <style scoped>
-.nav-action {
-  padding: 5px 12px;
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color var(--id-transition), color var(--id-transition);
-}
-
-.nav-action:hover {
-  color: var(--id-text);
-  background: var(--id-surface-hover);
-}
-
-.head {
+.toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--id-space-4);
-  padding: var(--id-space-5) 0 var(--id-space-4);
+  align-items: center;
+  gap: 8px;
+  margin-block-end: 16px;
 }
 
-.head__title {
-  font-size: var(--id-font-subtitle);
-  font-weight: 600;
-  color: var(--id-text);
-}
-
-.head__sub {
-  margin-top: 4px;
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
-}
-
-.search {
+.toolbar__search {
   display: flex;
-  gap: var(--id-space-2);
+  align-items: center;
+  gap: 8px;
+  width: min(520px, 100%);
 }
 
-.search__input {
-  min-width: 260px;
-  height: var(--id-control-height);
-  padding: 0 10px;
-  font-size: var(--id-font-body);
-  color: var(--id-text);
-  background: var(--id-surface-sunken);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-field);
-  outline: none;
-}
-
-.search__input:focus {
-  border-color: var(--id-accent);
+.toolbar__search :deep(.field) {
+  flex: 1;
+  min-width: 0;
 }
 
 .loading,
-.muted {
-  color: var(--id-text-muted);
-}
-
-.table-wrap {
-  overflow-x: auto;
-  background: var(--id-surface);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-card);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--id-font-body);
-}
-
-.table th {
-  padding: 10px var(--id-space-4);
-  font-size: var(--id-font-small);
-  font-weight: 500;
-  color: var(--id-text-muted);
-  text-align: left;
+.cell-muted {
+  color: var(--md-sys-color-on-surface-variant);
   white-space: nowrap;
-  border-bottom: 1px solid var(--id-border);
 }
 
-.table td {
-  padding: 10px var(--id-space-4);
-  color: var(--id-text-body);
-  vertical-align: top;
-  border-bottom: 1px solid var(--id-border);
+.alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-block-end: 16px;
 }
 
-.table tbody tr:last-child td {
-  border-bottom: none;
+/* ---------- 建号 ---------- */
+.create {
+  margin-block-end: 16px;
 }
 
-.name {
-  display: block;
-  font-weight: 500;
-  color: var(--id-text);
+.create__title {
+  margin: 0 0 4px;
+  color: var(--md-sys-color-on-surface);
 }
 
-.mono {
-  font-family: var(--id-font-mono, ui-monospace, monospace);
-  font-size: 11px;
-  color: var(--id-text-faint);
+.create__hint {
+  margin: 0 0 16px;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
-.tag {
-  display: inline-block;
-  margin-right: 4px;
-  padding: 1px 6px;
-  font-size: 11px;
-  color: var(--id-text-muted);
-  background: var(--id-surface-sunken);
-  border-radius: var(--id-radius-pill);
+.create__form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
 }
 
-.tag--ok {
-  color: var(--id-success);
-  background: var(--id-success-soft);
-}
-
-.tag--warn {
-  color: var(--id-warning);
-  background: var(--id-warning-soft);
-}
-
-.select {
-  height: 28px;
-  padding: 0 6px;
-  font-size: var(--id-font-small);
-  color: var(--id-text);
-  background: var(--id-surface-sunken);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-field);
-}
-
+/* ---------- 临时口令 ---------- */
 .temp {
-  margin: var(--id-space-2) 0;
-  font-size: var(--id-font-body);
+  margin: 4px 0;
 }
 
 .temp__value {
   display: inline-block;
   padding: 2px 8px;
-  font-family: ui-monospace, monospace;
-  font-size: 14px;
-  color: var(--id-text);
-  background: var(--id-surface-sunken);
-  border-radius: var(--id-radius-field);
+  border-radius: var(--md-sys-shape-corner-small);
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 10%, transparent);
+  font-family: var(--md-ref-typeface-mono);
   user-select: all;
 }
 
 .temp__hint {
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
+  margin: 0;
+  opacity: 0.9;
 }
 
 .temp__actions {
   display: flex;
-  gap: var(--id-space-2);
-  margin-top: var(--id-space-3);
+  gap: 8px;
+  margin-block-start: 8px;
 }
 
-.pager {
+/* ---------- 表格 ---------- */
+/* 表格卡片：MD3 没有 data table 组件，这里用容器色卡片 + 行分隔线，
+   行悬浮走状态层，与列表项同一口径 */
+.table-card {
+  background-color: var(--md-sys-color-surface-container-low);
+}
+
+.table-card :deep(.md-card__content) {
+  padding: 0;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 10px 12px;
+  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-block-end: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+  vertical-align: top;
+}
+
+.table tbody tr:last-child td {
+  border-block-end: none;
+}
+
+.table tbody tr {
+  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+@media (hover: hover) {
+  .table tbody tr:hover {
+    background-color: var(--md-sys-color-surface-container);
+  }
+}
+
+.cell-name {
+  display: block;
+  color: var(--md-sys-color-on-surface);
+}
+
+.cell-id {
+  display: block;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+
+.chips {
   display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* 表格里的下拉：保留 MD3 的 56dp 填充容器（压扁会让浮动标签压住值），
+   只把底色提到容器层，和表格表面拉开一级 */
+.role-select {
+  min-width: 124px;
+}
+
+.role-select :deep(.select-field__container) {
+  background-color: var(--md-sys-color-surface-container-highest);
+}
+
+/* 行操作收成图标按钮：一行放得下，行高不会再被按钮撑成三倍 */
+.actions {
+  display: flex;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: center;
-  gap: var(--id-space-3);
-  padding: var(--id-space-5) 0;
-}
-
-.pager__text {
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
-}
-
-.tag--danger {
-  color: var(--id-danger);
-  background: var(--id-danger-soft);
+  gap: 2px;
 }
 
 .row--disabled td {
   opacity: 0.62;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.head__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--id-space-2);
-}
-
-.create {
-  margin-bottom: var(--id-space-4);
-  padding: var(--id-space-4);
-  background: var(--id-surface);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-card);
-}
-
-.create__title {
-  font-size: var(--id-font-body);
-  font-weight: 600;
-  color: var(--id-text);
-}
-
-.create__hint {
-  margin: 6px 0 var(--id-space-3);
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
-}
-
-.create__form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--id-space-3);
-}
-
-.create__field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
-}
-
-.create__input {
-  min-width: 180px;
-  height: var(--id-control-height);
-  padding: 0 10px;
-  font-size: var(--id-font-body);
-  color: var(--id-text);
-  background: var(--id-surface-sunken);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-field);
-  outline: none;
-}
-
-.create__input:focus {
-  border-color: var(--id-accent);
-}
-
+/* ---------- 展开面板 ---------- */
 .panel-row td {
   padding: 0;
-  background: var(--id-surface-sunken);
+  background-color: var(--md-sys-color-surface-container);
 }
 
 .panel {
-  padding: var(--id-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
 }
 
 .panel__title {
-  font-size: var(--id-font-body);
-  font-weight: 600;
-  color: var(--id-text);
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
 }
 
 .panel__hint {
-  margin: 6px 0 var(--id-space-3);
-  font-size: var(--id-font-small);
-  color: var(--id-text-muted);
+  margin: 0;
+  max-width: 80ch;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .panel__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--id-space-3);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
 }
 
 .panel__field {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--id-space-2);
+  gap: 12px;
+}
+
+.panel__site {
+  color: var(--md-sys-color-on-surface);
 }
 
 .panel__list {
   display: flex;
   flex-direction: column;
-  gap: var(--id-space-2);
-  padding: 0;
+  gap: 8px;
   margin: 0;
+  padding: 0;
   list-style: none;
 }
 
@@ -831,6 +842,25 @@ async function logout() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--id-space-2);
+  gap: 12px;
+}
+
+/* ---------- 分页 ---------- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-block: 20px;
+}
+
+.pager__text {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+@media (max-width: 720px) {
+  .toolbar__search {
+    width: 100%;
+  }
 }
 </style>

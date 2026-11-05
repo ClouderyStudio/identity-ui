@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useSession } from '@/composables/useSession'
+import { RouterLink, useRouter } from 'vue-router'
+import { IconLogin } from '@/icons'
 import IdAlert from '@/components/IdAlert.vue'
-import IdButton from '@/components/IdButton.vue'
 import IdCard from '@/components/IdCard.vue'
 import IdDivider from '@/components/IdDivider.vue'
 import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
-import { RouterLink } from 'vue-router'
+import IdProviderButton from '@/components/identity/IdProviderButton.vue'
+import M3Button from '@/components/m3/M3Button.vue'
+import { useSession } from '@/composables/useSession'
 import { identityApi, isApiError, type ExternalProvider } from '@/api/client'
 
 /**
@@ -44,7 +45,7 @@ function resolveReturnUrl(): string {
 }
 
 const form = reactive({ account: '', password: '' })
-const errors = reactive<{ account: string; password: string }>({ account: '', password: '' })
+const errors = reactive({ account: '', password: '' })
 const submitting = ref(false)
 const formError = ref('')
 const providers = ref<ExternalProvider[]>([])
@@ -76,18 +77,23 @@ async function submit() {
   }
 }
 
+function startExternal(name: string) {
+  identityApi.startExternalLogin(name, resolveReturnUrl())
+}
 </script>
 
 <template>
   <IdLayout>
     <IdCard>
       <template #header>
-        <p class="id-eyebrow">云术身份中心</p>
-        <h1 class="id-card-title">登录</h1>
-        <p class="id-card-subtitle">使用你的云术账户继续</p>
+        <p class="login__eyebrow md-typescale-label-medium">云术身份中心</p>
+        <h1 class="login__title md-typescale-headline-medium">登录</h1>
+        <p class="login__subtitle md-typescale-body-medium">
+          使用你的云术账户继续，登录状态在全部站点通用。
+        </p>
       </template>
 
-      <form class="id-form" novalidate @submit.prevent="submit">
+      <form class="login__form" novalidate @submit.prevent="submit">
         <IdField
           v-model="form.account"
           label="账户 / 邮箱"
@@ -99,122 +105,113 @@ async function submit() {
         <IdField
           v-model="form.password"
           label="密码"
+          placeholder="输入密码"
           type="password"
-          placeholder="密码"
           autocomplete="current-password"
           revealable
           required
           :error="errors.password"
         />
 
-        <div class="id-form__links">
-          <RouterLink class="id-link" to="/forgot">找回密码</RouterLink>
-          <RouterLink class="id-link" to="/register">注册账号</RouterLink>
+        <div class="login__links">
+          <RouterLink class="login__link md-typescale-label-large" to="/forgot">找回密码</RouterLink>
+          <RouterLink class="login__link md-typescale-label-large" to="/register">注册账号</RouterLink>
         </div>
 
-        <IdAlert v-if="formError" variant="error">{{ formError }}</IdAlert>
+        <IdAlert v-if="formError" variant="error" title="登录未完成">{{ formError }}</IdAlert>
 
-        <IdButton type="submit" block :loading="submitting">登入</IdButton>
+        <M3Button type="submit" block size="lg" :loading="submitting" :trailing-icon="IconLogin">
+          登入
+        </M3Button>
       </form>
 
       <template v-if="providers.length">
         <IdDivider label="或使用第三方账号" />
-        <div class="id-providers">
-          <button
+        <div class="login__providers">
+          <IdProviderButton
             v-for="provider in providers"
             :key="provider.name"
-            type="button"
-            class="id-provider"
-            @click="identityApi.startExternalLogin(provider.name, returnUrl)"
-          >
-            {{ provider.displayName }}
-          </button>
+            :name="provider.name"
+            :display-name="provider.displayName"
+            :icon="provider.icon"
+            @click="startExternal(provider.name)"
+          />
         </div>
       </template>
 
       <template #footer>
-        登录即表示你同意我们的
-        <a href="/terms">服务条款</a>
-        与
-        <a href="/privacy">隐私策略</a>
-        。
+        <p class="login__legal">
+          登录即表示你同意我们的
+          <RouterLink to="/terms">服务条款</RouterLink>
+          与
+          <RouterLink to="/privacy">隐私政策</RouterLink>
+          。
+        </p>
       </template>
     </IdCard>
   </IdLayout>
 </template>
 
 <style scoped>
-.id-eyebrow {
-  margin-bottom: var(--id-space-2);
-  font-size: var(--id-font-small);
-  font-weight: 600;
-  letter-spacing: 0.12em;
+.login__eyebrow {
+  margin: 0;
+  color: var(--md-sys-color-primary);
   text-transform: uppercase;
-  color: var(--id-text-muted);
+  letter-spacing: 0.14em;
 }
 
-.id-card-title {
-  font-size: var(--id-font-title);
-  font-weight: 600;
-  color: var(--id-text);
-  line-height: 1.25;
+.login__title {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
 }
 
-.id-card-subtitle {
-  margin-top: var(--id-space-2);
-  font-size: var(--id-font-body);
-  color: var(--id-text-muted);
+.login__subtitle {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
-.id-form {
+.login__form {
   display: flex;
   flex-direction: column;
-  gap: var(--id-space-4);
-  margin-top: var(--id-space-5);
+  gap: 16px;
 }
 
-.id-form__links {
+.login__links {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  margin-top: calc(var(--id-space-1) * -1);
+  margin-block-start: -4px;
 }
 
-.id-link {
-  padding: 0;
-  font-size: var(--id-font-small);
-  color: var(--id-accent);
-  background: none;
-  border: none;
-  cursor: pointer;
+.login__link {
+  padding: 4px 8px;
+  border-radius: var(--md-sys-shape-corner-full);
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.id-link:hover {
-  color: var(--id-accent-strong);
-  text-decoration: underline;
+.login__link:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
 }
 
-.id-providers {
+.login__providers {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--id-space-2);
+  flex-direction: column;
+  gap: 8px;
 }
 
-.id-provider {
-  flex: 1 1 120px;
-  height: 38px;
-  padding: 0 var(--id-space-4);
-  font-size: var(--id-font-small);
-  font-weight: 600;
-  color: var(--id-text);
-  background: var(--id-surface-strong);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-field);
-  cursor: pointer;
-  transition: background-color var(--id-transition), border-color var(--id-transition);
+.login__legal {
+  margin: 0;
 }
 
-.id-provider:hover {
-  background: var(--id-surface-hover);
-  border-color: var(--id-border-strong);
+.login__legal :deep(a) {
+  color: var(--md-sys-color-primary);
+  text-decoration: none;
+}
+
+.login__legal :deep(a:hover) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 </style>

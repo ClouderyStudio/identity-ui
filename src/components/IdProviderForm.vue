@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import IdButton from './IdButton.vue'
+import { computed } from 'vue'
+import { IconKey, IconLink, IconSave } from '@/icons'
+import M3Button from '@/components/m3/M3Button.vue'
+import M3Divider from '@/components/m3/M3Divider.vue'
+import M3Icon from '@/components/m3/M3Icon.vue'
+import M3Switch from '@/components/m3/M3Switch.vue'
 import IdField from './IdField.vue'
+import IdSelect, { type SelectOption } from './identity/IdSelect.vue'
 
 /**
  * 登录方式编辑表单（自定义 OAuth2 提供方 / 彩虹聚合）。
@@ -37,13 +43,32 @@ const emit = defineEmits<{
   save: []
   cancel: []
 }>()
+
+const kindOptions: SelectOption[] = [
+  { value: 'oauth2', label: 'OAuth2（自定义提供方）' },
+  { value: 'rainbow', label: '彩虹聚合登录' },
+]
+
+const kind = computed({
+  get: () => props.draft.kind,
+  set: (value: string) => {
+    props.draft.kind = value === 'rainbow' ? 'rainbow' : 'oauth2'
+  },
+})
 </script>
 
 <template>
   <section class="panel">
-    <h2 class="panel__title">{{ props.editing ? '编辑登录方式' : '新建登录方式' }}</h2>
+    <header class="panel__header">
+      <h2 class="panel__title md-typescale-title-large">
+        {{ props.editing ? '编辑登录方式' : '新建登录方式' }}
+      </h2>
+      <p class="panel__subtitle md-typescale-body-medium">
+        密钥只写不读：留空表示保留原有密钥，界面永远不会回显。
+      </p>
+    </header>
 
-    <div class="form">
+    <div class="grid">
       <IdField
         v-model="props.draft.name"
         label="标识"
@@ -53,21 +78,20 @@ const emit = defineEmits<{
         required
       />
       <IdField v-model="props.draft.displayName" label="显示名称" placeholder="登录按钮上显示的名字" />
-
-      <label class="field">
-        <span class="field__label">类型</span>
-        <select v-model="props.draft.kind" class="select" :disabled="props.editing">
-          <option value="oauth2">OAuth2（自定义提供方）</option>
-          <option value="rainbow">彩虹聚合登录</option>
-        </select>
-        <span v-if="props.editing" class="field__hint">类型创建后不可修改</span>
-      </label>
-
-      <IdField v-model="props.draft.icon" label="图标标识" placeholder="可选，前端按钮用的名字" />
+      <IdSelect
+        v-model="kind"
+        label="类型"
+        :options="kindOptions"
+        :disabled="props.editing"
+        :hint="props.editing ? '类型创建后不可修改' : ''"
+      />
+      <IdField v-model="props.draft.icon" label="图标标识" placeholder="可选，前端按钮用的名字（github / qq …）" />
     </div>
 
+    <M3Divider />
+
     <!-- OAuth2 专有字段 -->
-    <div v-if="props.draft.kind === 'oauth2'" class="form">
+    <div v-if="props.draft.kind === 'oauth2'" class="grid">
       <IdField v-model="props.draft.clientId" label="Client ID" placeholder="上游平台分配的 client_id" required />
       <IdField
         v-model="props.draft.clientSecret"
@@ -90,7 +114,7 @@ const emit = defineEmits<{
     </div>
 
     <!-- 彩虹聚合专有字段 -->
-    <div v-else class="form">
+    <div v-else class="grid">
       <IdField
         v-model="props.draft.apiUrl"
         label="聚合服务地址"
@@ -110,82 +134,112 @@ const emit = defineEmits<{
       />
     </div>
 
-    <div class="form form--single">
-      <label class="field field--inline">
-        <input v-model="props.draft.enabled" type="checkbox" />
-        <span>启用（登录页展示该方式）</span>
-      </label>
+    <div class="switch-row">
+      <div class="switch-row__text">
+        <p class="switch-row__title md-typescale-title-small">
+          <M3Icon :icon="IconLink" :size="18" />
+          启用
+        </p>
+        <p class="switch-row__hint md-typescale-body-small">停用后登录页不再展示该方式，已绑定用户的绑定记录保留。</p>
+      </div>
+      <M3Switch v-model="props.draft.enabled" label="启用该登录方式" />
     </div>
 
-    <div class="actions">
-      <IdButton :loading="props.busy" @click="emit('save')">保存</IdButton>
-      <IdButton variant="secondary" @click="emit('cancel')">取消</IdButton>
-    </div>
+    <footer class="panel__footer">
+      <p class="panel__note md-typescale-body-small">
+        <M3Icon :icon="IconKey" :size="16" />
+        提交时若密钥为空，只会更新其它字段。
+      </p>
+      <div class="panel__actions">
+        <M3Button variant="text" @click="emit('cancel')">取消</M3Button>
+        <M3Button :icon="IconSave" :loading="props.busy" @click="emit('save')">保存</M3Button>
+      </div>
+    </footer>
   </section>
 </template>
 
 <style scoped>
 .panel {
-  margin-bottom: var(--id-space-5);
-  padding: var(--id-space-5);
-  background: var(--id-surface);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-block-end: 20px;
+  padding: 20px;
+  border-radius: var(--md-sys-shape-corner-large);
+  background-color: var(--md-sys-color-surface-container-low);
+  box-shadow: var(--md-sys-elevation-level1);
 }
 
-.panel__title {
-  margin-bottom: var(--id-space-4);
-  font-size: var(--id-font-body);
-  font-weight: 600;
-  color: var(--id-text);
-}
-
-.form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--id-space-4);
-}
-
-.form--single {
-  margin-top: var(--id-space-4);
-  grid-template-columns: 1fr;
-}
-
-.field {
+.panel__header {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: var(--id-font-small);
 }
 
-.field--inline {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--id-space-2);
-  color: var(--id-text-body);
+.panel__title {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
 }
 
-.field__label {
-  color: var(--id-text-muted);
+.panel__subtitle {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
-.field__hint {
-  color: var(--id-text-faint);
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
 }
 
-.select {
-  height: var(--id-control-height);
-  padding: 0 8px;
-  font-size: var(--id-font-body);
-  color: var(--id-text);
-  background: var(--id-surface-sunken);
-  border: 1px solid var(--id-border);
-  border-radius: var(--id-radius-field);
-}
-
-.actions {
+.switch-row {
   display: flex;
-  gap: var(--id-space-2);
-  margin-top: var(--id-space-4);
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  background-color: var(--md-sys-color-surface-container);
+}
+
+.switch-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.switch-row__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.switch-row__hint {
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.panel__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel__note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>
