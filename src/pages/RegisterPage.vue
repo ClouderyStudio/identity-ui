@@ -3,12 +3,13 @@ import { computed, onUnmounted, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { IconArrowBack } from '@/icons'
 import { M3Button, M3Icon } from '@clderystd/m3-ui'
-import IdAlert from '@/components/IdAlert.vue'
 import IdCard from '@/components/IdCard.vue'
 import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
 import IdStrengthMeter from '@/components/identity/IdStrengthMeter.vue'
 import { identityApi, isApiError } from '@/api/client'
+import IdAlert from '@/components/IdAlert.vue'
+import { useToast } from '@/composables/useToast'
 
 /**
  * 注册页。字段与后端 POST /identity/account/register 一一对应。
@@ -39,7 +40,7 @@ const form = reactive({
 
 const errors = reactive({ username: '', email: '', code: '', password: '', confirm: '' })
 const submitting = ref(false)
-const formError = ref('')
+const toast = useToast()
 const done = ref(false)
 
 const passwordMismatch = computed(
@@ -60,7 +61,6 @@ async function sendCode() {
   }
 
   errors.email = ''
-  formError.value = ''
   sending.value = true
   try {
     await identityApi.sendEmailCode({ email: form.email.trim().toLowerCase(), purpose: 'register' })
@@ -70,7 +70,7 @@ async function sendCode() {
       if (countdown.value <= 0 && timer) clearInterval(timer)
     }, 1000)
   } catch (error) {
-    formError.value = isApiError(error) ? error.detail : '发送失败，请稍后重试'
+    toast.error(isApiError(error) ? error.detail : '发送失败，请稍后重试', '验证码未发送')
   } finally {
     sending.value = false
   }
@@ -93,7 +93,6 @@ function validate(): boolean {
 }
 
 async function submit() {
-  formError.value = ''
   if (!validate()) return
 
   submitting.value = true
@@ -111,7 +110,7 @@ async function submit() {
       setTimeout(() => window.location.assign('/account'), 1200)
     }
   } catch (error) {
-    formError.value = isApiError(error) ? error.detail : '网络异常，请稍后重试'
+    toast.error(isApiError(error) ? error.detail : '网络异常，请稍后重试', '注册未完成')
   } finally {
     submitting.value = false
   }
@@ -209,8 +208,6 @@ async function submit() {
           required
           :error="errors.confirm || (passwordMismatch ? '两次输入的密码不一致' : '')"
         />
-
-        <IdAlert v-if="formError" variant="error" title="注册未完成">{{ formError }}</IdAlert>
 
         <M3Button type="submit" block size="lg" :loading="submitting">注册</M3Button>
 

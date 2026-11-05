@@ -3,6 +3,7 @@ import { RouterView } from 'vue-router'
 import { onMounted } from 'vue'
 import { initTheme } from '@/composables/useTheme'
 import { useSession } from '@/composables/useSession'
+import IdToastHost from '@/components/identity/IdToastHost.vue'
 
 // 提前初始化主题，避免首屏闪一下深色
 initTheme()
@@ -14,4 +15,5 @@ onMounted(refresh)
 
 <template>
   <RouterView />
+  <IdToastHost />
 </template>

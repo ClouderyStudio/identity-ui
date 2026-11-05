@@ -3,12 +3,12 @@ import { computed, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { IconCheckCircle, IconLinkOff } from '@/icons'
 import { M3Button, M3Icon } from '@clderystd/m3-ui'
-import IdAlert from '@/components/IdAlert.vue'
 import IdCard from '@/components/IdCard.vue'
 import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
 import IdStrengthMeter from '@/components/identity/IdStrengthMeter.vue'
 import { identityApi, isApiError } from '@/api/client'
+import { useToast } from '@/composables/useToast'
 
 /**
  * 重置密码：邮件里链接的落点（/reset?token=...）。
@@ -21,7 +21,7 @@ const props = withDefaults(defineProps<{ token?: string }>(), { token: '' })
 const form = reactive({ next: '', confirm: '' })
 const errors = reactive({ next: '', confirm: '' })
 const submitting = ref(false)
-const formError = ref('')
+const toast = useToast()
 const success = ref(false)
 
 /** token 优先取 prop（路由参数），其次取地址栏查询串。 */
@@ -40,7 +40,6 @@ function validate(): boolean {
 }
 
 async function submit() {
-  formError.value = ''
   if (!validate()) return
 
   submitting.value = true
@@ -48,7 +47,7 @@ async function submit() {
     await identityApi.resetPassword({ token: token.value, newPassword: form.next })
     success.value = true
   } catch (error) {
-    formError.value = isApiError(error) ? error.detail : '网络异常，请稍后重试'
+    toast.error(isApiError(error) ? error.detail : '网络异常，请稍后重试', '操作未完成')
   } finally {
     submitting.value = false
   }
@@ -109,8 +108,6 @@ async function submit() {
           required
           :error="errors.confirm"
         />
-
-        <IdAlert v-if="formError" variant="error" title="重置未完成">{{ formError }}</IdAlert>
 
         <M3Button type="submit" block size="lg" :loading="submitting">保存新密码</M3Button>
       </form>

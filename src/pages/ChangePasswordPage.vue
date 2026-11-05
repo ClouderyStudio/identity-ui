@@ -9,6 +9,7 @@ import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
 import IdStrengthMeter from '@/components/identity/IdStrengthMeter.vue'
 import { identityApi, isApiError } from '@/api/client'
+import { useToast } from '@/composables/useToast'
 
 /**
  * 改密页。对应 POST /identity/account/password（需登录）。
@@ -19,7 +20,7 @@ import { identityApi, isApiError } from '@/api/client'
 const form = reactive({ current: '', next: '', confirm: '' })
 const errors = reactive({ current: '', next: '', confirm: '' })
 const submitting = ref(false)
-const formError = ref('')
+const toast = useToast()
 const success = ref(false)
 
 const sameAsCurrent = computed(
@@ -35,7 +36,6 @@ function validate(): boolean {
 }
 
 async function submit() {
-  formError.value = ''
   success.value = false
   if (!validate()) return
 
@@ -47,7 +47,7 @@ async function submit() {
     form.next = ''
     form.confirm = ''
   } catch (error) {
-    formError.value = isApiError(error) ? error.detail : '网络异常，请稍后重试'
+    toast.error(isApiError(error) ? error.detail : '网络异常，请稍后重试', '操作未完成')
   } finally {
     submitting.value = false
   }
@@ -108,8 +108,6 @@ async function submit() {
           required
           :error="errors.confirm"
         />
-
-        <IdAlert v-if="formError" variant="error" title="修改未完成">{{ formError }}</IdAlert>
 
         <M3Button type="submit" block size="lg" :loading="submitting">保存新密码</M3Button>
       </form>

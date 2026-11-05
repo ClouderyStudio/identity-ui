@@ -282,15 +282,24 @@ async function handle(url: URL, init: RequestInit): Promise<Response | null> {
   if (!path.startsWith('/identity/')) return null
 
   /* ---------- 公开 ---------- */
+  // 演示开关：localStorage 里 'identity-mock-auth' 为 '0' 时当作未登录，
+  // 用于核对登录页 / 第三方登录错误这一类只在「未登录」时出现的界面。
+  const signedIn = window.localStorage.getItem('identity-mock-auth') !== '0'
+
   if (path === '/identity/auth/status') {
-    return json({
-      success: true,
-      isAuthenticated: true,
-      user: { id: ME.id, username: ME.username, email: ME.email, avatar: ME.avatar },
-    })
+    return json(
+      signedIn
+        ? {
+            success: true,
+            isAuthenticated: true,
+            user: { id: ME.id, username: ME.username, email: ME.email, avatar: ME.avatar },
+          }
+        : { success: true, isAuthenticated: false },
+    )
   }
 
   if (path === '/identity/account/profile') {
+    if (!signedIn) return json({ detail: '请先登录' }, 401)
     return json({ success: true, user: toProfile(ME) })
   }
 

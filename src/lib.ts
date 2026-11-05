@@ -22,6 +22,7 @@ export * from './components'
 export * from './pages'
 export { useTheme, initTheme, type ThemeMode } from './composables/useTheme'
 export { useSession } from './composables/useSession'
+export { useToast, type ToastTone, type ToastOptions } from './composables/useToast'
 export { useModal } from './composables/useModal'
 export { vRipple, vReveal } from './directives'
 export {

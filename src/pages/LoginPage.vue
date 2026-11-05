@@ -2,7 +2,6 @@
 import { onMounted, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { IconLogin } from '@/icons'
-import IdAlert from '@/components/IdAlert.vue'
 import IdCard from '@/components/IdCard.vue'
 import IdDivider from '@/components/IdDivider.vue'
 import IdField from '@/components/IdField.vue'
@@ -10,6 +9,7 @@ import IdLayout from '@/components/IdLayout.vue'
 import IdProviderButton from '@/components/identity/IdProviderButton.vue'
 import { M3Button } from '@clderystd/m3-ui'
 import { useSession } from '@/composables/useSession'
+import { useToast } from '@/composables/useToast'
 import { identityApi, isApiError, type ExternalProvider } from '@/api/client'
 
 /**
@@ -34,6 +34,7 @@ const props = withDefaults(
 
 const router = useRouter()
 const session = useSession()
+const toast = useToast()
 
 /** 最终回跳地址：prop > 查询串 > 账户面板。只接受站内路径，挡住 open redirect。 */
 function resolveReturnUrl(): string {
@@ -51,6 +52,16 @@ const formError = ref('')
 const providers = ref<ExternalProvider[]>([])
 
 onMounted(async () => {
+  // 第三方登录失败时后端会 302 回 /login?externalError=...，
+  // 在这里弹成 snackbar，并把参数从地址栏清掉（刷新不会重复提示）。
+  const externalError = new URLSearchParams(window.location.search).get('externalError')
+  if (externalError) {
+    toast.error(externalError, '第三方登录未完成')
+    const url = new URL(window.location.href)
+    url.searchParams.delete('externalError')
+    window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+  }
+
   providers.value = await identityApi.providers()
 })
 
@@ -71,7 +82,8 @@ async function submit() {
     session.set(user)
     await router.replace(resolveReturnUrl())
   } catch (error) {
-    formError.value = isApiError(error) ? error.detail : '网络异常，请稍后再试'
+    // 用 snackbar 而不是行内横幅：失败原因常常是一句话，横幅会把表单往下推
+    toast.error(isApiError(error) ? error.detail : '网络异常，请稍后再试', '登录未完成')
   } finally {
     submitting.value = false
   }
@@ -117,8 +129,6 @@ function startExternal(name: string) {
           <RouterLink class="login__link md-typescale-label-large" to="/forgot">找回密码</RouterLink>
           <RouterLink class="login__link md-typescale-label-large" to="/register">注册账号</RouterLink>
         </div>
-
-        <IdAlert v-if="formError" variant="error" title="登录未完成">{{ formError }}</IdAlert>
 
         <M3Button type="submit" block size="lg" :loading="submitting" :trailing-icon="IconLogin">
           登入
