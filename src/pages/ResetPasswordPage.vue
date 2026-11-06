@@ -11,6 +11,7 @@ import { identityApi, isApiError } from '@/api/client'
 import { useToast } from '@/composables/useToast'
 import IdNavButton from '@/components/identity/IdNavButton.vue'
 import IdRouteLink from '@/components/identity/IdRouteLink.vue'
+import IdAuthNotice from '@/components/identity/IdAuthNotice.vue'
 
 /**
  * 重置密码：邮件里链接的落点（/reset?token=...）。
@@ -119,6 +120,7 @@ async function submit() {
       </template>
     </IdCard>
   </IdLayout>
+  <IdAuthNotice variant="docked" />
 </template>
 
 <style scoped>

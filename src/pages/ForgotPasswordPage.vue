@@ -10,6 +10,7 @@ import IdLayout from '@/components/IdLayout.vue'
 import { identityApi, isApiError } from '@/api/client'
 import IdNavButton from '@/components/identity/IdNavButton.vue'
 import IdRouteLink from '@/components/identity/IdRouteLink.vue'
+import IdAuthNotice from '@/components/identity/IdAuthNotice.vue'
 
 /**
  * 找回密码：提交邮箱后由后端发送重置链接（POST /identity/account/forgot-password）。
@@ -86,6 +87,7 @@ async function submit() {
       </template>
     </IdCard>
   </IdLayout>
+  <IdAuthNotice variant="docked" />
 </template>
 
 <style scoped>
