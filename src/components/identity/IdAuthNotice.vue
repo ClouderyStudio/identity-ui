@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { ref, useTemplateRef, watchEffect } from 'vue'
 import { IconClose, IconExpandMore, IconMail } from '@/icons'
 import { M3Icon } from '@clderystd/m3-ui'
 
@@ -38,17 +38,48 @@ const contact = 'justqiyi@qq.com'
  * 否则展开后会把表单最下面一行压住。
  */
 const NOTICE_CLASS = 'id-has-notice'
+const NOTICE_HEIGHT_VAR = '--id-notice-h'
 
-// 关掉后要把标记一并撤掉，否则底部会白白多出一段留白
-watchEffect(() => {
+const el = useTemplateRef<HTMLElement>('notice')
+
+/*
+ * 把公告的实际高度写进 CSS 变量，让页面外壳按真实尺寸留白。
+ *
+ * 不能写死一个常数：桌面端公告是右下角小卡片，窄屏是贴底通栏，
+ * 而通栏的高度又随文案换行而变（390px 宽时 176px，887px 宽时 120px）。
+ * 写死 148px 的结果是手机上页脚仍被盖住。
+ */
+watchEffect((onCleanup) => {
   if (typeof document === 'undefined') return
-  document.documentElement.classList.toggle(NOTICE_CLASS, !dismissed.value)
+  const root = document.documentElement
+  root.classList.toggle(NOTICE_CLASS, !dismissed.value)
+
+  const node = el.value
+  if (!node) {
+    root.style.removeProperty(NOTICE_HEIGHT_VAR)
+    return
+  }
+
+  const apply = () => {
+    const height = node.getBoundingClientRect().height
+    root.style.setProperty(NOTICE_HEIGHT_VAR, `${Math.ceil(height)}px`)
+  }
+
+  apply()
+  const observer = new ResizeObserver(apply)
+  observer.observe(node)
+
+  onCleanup(() => {
+    observer.disconnect()
+    root.style.removeProperty(NOTICE_HEIGHT_VAR)
+  })
 })
 </script>
 
 <template>
   <aside
     v-if="!dismissed"
+    ref="notice"
     class="notice"
     :class="[`notice--${variant}`, { 'notice--open': open }]"
     aria-label="登录方式变更公告"

@@ -218,14 +218,6 @@ const year = new Date().getFullYear()
 
 /* ---------- 窄屏：面板铺满整屏，插画退到后面 ---------- */
 @media (max-width: 900px) {
-  /*
-   * 窄屏下公告是 fixed 贴底通栏（见 IdAuthNotice），不占布局空间。
-   * 这里给滚动内容留出等高留白，否则展开后会把表单最后一行压住。
-   */
-  :global(html.id-has-notice) .auth__body {
-    padding-block-end: 148px;
-  }
-
   .auth__panel {
     width: 100%;
     border-inline-end: none;

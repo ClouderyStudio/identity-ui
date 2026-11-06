@@ -101,3 +101,29 @@
   white-space: nowrap;
   border: 0;
 }
+
+/*
+ * 窄屏底部公告的留白（见 components/identity/IdAuthNotice.vue）。
+ *
+ * 公告是 position: fixed 贴底通栏，不占布局流。登录 / 注册 / 法务页的外壳是
+ * height: 100dvh + overflow: hidden，内容区在 .auth__body 里滚动 ——
+ * 不给这块留白，展开的公告就会盖住表单最后一行。
+ *
+ * 写在全局样式表而不是组件的 <style scoped> 里：scoped 下的 :global() 会丢掉
+ * 后代选择器，编译出来变成 html.id-has-notice{padding-block-end:148px}，
+ * 于是整页比视口高出一截、凭空出现滚动条（这就是之前那个"视觉问题"）。
+ *
+ * 留白加在 .auth__panel-inner 而不是 .auth__body：
+ * 页脚（服务条款 / 隐私政策）是 .auth__body 的兄弟节点，贴在面板底部。
+ * 只给 body 留白的话，页脚仍会被公告盖住、点不到；给整个面板留白才能
+ * 把「页脚」一起顶到公告上方。
+ *
+ * 账户页（IdSiteShell）的公告是 inline 形态，本身在文档流里，不需要这条。
+ */
+@media (max-width: 900px) {
+  html.id-has-notice .auth__panel-inner {
+    /* 公告实际高度由 IdAuthNotice 用 ResizeObserver 写进 --id-notice-h，
+       再留 12px 呼吸位。写死常数会在窄屏被盖住（那里公告更高）。 */
+    padding-block-end: calc(var(--id-notice-h, 148px) + 12px);
+  }
+}
