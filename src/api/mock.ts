@@ -153,8 +153,8 @@ const providers: MockProvider[] = [
 ]
 
 const rawAccounts: Array<Partial<MockAccount> & { username: string }> = [
-  { username: 'cloudery', email: 'hello@cloudery.cn', role: 'admin', hasPassword: true, bindings: ['github', 'qq'], isMe: true } as never,
-  { username: 'natayark', email: 'natayark@cloudery.cn', role: 'member', hasPassword: true, bindings: ['qq'] },
+  { username: 'cloudery', email: 'hello@cldery.com', role: 'admin', hasPassword: true, bindings: ['github', 'qq'], isMe: true } as never,
+  { username: 'natayark', email: 'natayark@cldery.com', role: 'member', hasPassword: true, bindings: ['qq'] },
   { username: 'zhuxs', email: 'zhuxs@example.com', role: null, hasPassword: true, bindings: [] },
   { username: 'lkdns_admin', email: 'ops@lkdns.com', role: 'admin', hasPassword: true, bindings: ['github', 'wechat', 'qq'] },
   { username: 'shiyu', email: 'shiyu@example.com', role: 'member', hasPassword: true, bindings: ['bilibili'] },

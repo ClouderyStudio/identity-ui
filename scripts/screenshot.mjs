@@ -61,7 +61,7 @@ const MOCK = `
     const profile = {
       id: '3f2a91c4-77b0-4d38-9c62-1a8f0b7e5d21',
       username: 'cloudery',
-      email: 'hello@cloudery.cn',
+      email: 'hello@cldery.com',
       avatar: null,
       role: 'admin',
       createdAt: '2024-03-18T10:24:00Z',
@@ -76,7 +76,7 @@ const MOCK = `
     const account = {
       id: '3f2a91c4-77b0-4d38-9c62-1a8f0b7e5d21',
       username: 'cloudery',
-      email: 'hello@cloudery.cn',
+      email: 'hello@cldery.com',
       role: 'admin',
       hasPassword: true,
       passwordAlgorithm: 'pbkdf2',

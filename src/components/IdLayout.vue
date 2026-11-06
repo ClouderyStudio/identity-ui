@@ -55,7 +55,7 @@ const year = new Date().getFullYear()
           <div class="auth__header-actions">
             <a
               class="auth__site-link md-typescale-label-large"
-              href="https://cloudery.cn"
+              href="https://cldery.com"
               target="_blank"
               rel="noopener noreferrer"
             >
