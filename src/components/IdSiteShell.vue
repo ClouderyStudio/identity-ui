@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+
 import { IconGithub } from '@/icons'
 import { M3IconButton, M3TopAppBar } from '@clderystd/m3-ui'
 import IdBrand from './identity/IdBrand.vue'
 import IdThemeToggle from './identity/IdThemeToggle.vue'
+import IdRouteLink from './identity/IdRouteLink.vue'
 
 /**
  * 全屏站点外壳（账户面板 / 管理后台）。
@@ -55,7 +57,7 @@ const year = new Date().getFullYear()
 
     <M3TopAppBar :scrolled="scrolled">
       <template #leading>
-        <IdBrand :name="brand" :tagline="tagline" href="/account" :size="32" />
+        <IdBrand :name="brand" :tagline="tagline" to="/account" :size="32" />
       </template>
 
       <template #actions>
@@ -76,8 +78,8 @@ const year = new Date().getFullYear()
       <div class="id-page id-page--wide shell__footer-inner">
         <span class="md-typescale-body-small">© {{ year }} {{ legal }}</span>
         <nav class="shell__footer-links" aria-label="法务">
-          <a class="shell__footer-link" href="/terms">服务条款</a>
-          <a class="shell__footer-link" href="/privacy">隐私政策</a>
+          <IdRouteLink class="shell__footer-link" to="/terms">服务条款</IdRouteLink>
+          <IdRouteLink class="shell__footer-link" to="/privacy">隐私政策</IdRouteLink>
           <M3IconButton
             :icon="IconGithub"
             label="云术工作室 GitHub"

@@ -17,6 +17,7 @@ import {
 } from '@/icons'
 import { M3Avatar, M3Button, M3Card, M3Chip, M3Icon } from '@clderystd/m3-ui'
 import IdAlert from '@/components/IdAlert.vue'
+import IdAuthNotice from '@/components/identity/IdAuthNotice.vue'
 import IdThemeToggle from '@/components/identity/IdThemeToggle.vue'
 import IdSiteShell from '@/components/IdSiteShell.vue'
 import { identityApi, isApiError, type AccountProfile, type ExternalProvider } from '@/api/client'
@@ -211,6 +212,9 @@ const facts = computed(() => {
           <M3Chip v-if="profile.isAdmin" variant="assist" :icon="IconSecurity" label="管理员" />
         </div>
       </section>
+
+      <!-- 登录方式变更公告：Hero 之下、内容之上 -->
+      <IdAuthNotice variant="inline" class="account-notice" />
 
       <div class="grid">
         <!-- 左列 -->
@@ -556,4 +560,8 @@ const facts = computed(() => {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.account-notice {
+  margin-block: 16px 20px;
+}
+
 </style>

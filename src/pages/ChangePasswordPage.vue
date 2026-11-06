@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+
 import { IconArrowBack } from '@/icons'
 import { M3Button, M3Icon } from '@clderystd/m3-ui'
 import IdAlert from '@/components/IdAlert.vue'
@@ -10,6 +10,7 @@ import IdLayout from '@/components/IdLayout.vue'
 import IdStrengthMeter from '@/components/identity/IdStrengthMeter.vue'
 import { identityApi, isApiError } from '@/api/client'
 import { useToast } from '@/composables/useToast'
+import IdRouteLink from '@/components/identity/IdRouteLink.vue'
 
 /**
  * 改密页。对应 POST /identity/account/password（需登录）。
@@ -58,10 +59,10 @@ async function submit() {
   <IdLayout>
     <IdCard>
       <template #header>
-        <RouterLink class="back" to="/account">
+        <IdRouteLink class="back" to="/account">
           <M3Icon :icon="IconArrowBack" :size="18" />
           返回账户面板
-        </RouterLink>
+        </IdRouteLink>
 
         <h1 class="title md-typescale-headline-medium">修改密码</h1>
         <p class="subtitle md-typescale-body-medium">修改后其它设备上的登录状态不会立即失效。</p>

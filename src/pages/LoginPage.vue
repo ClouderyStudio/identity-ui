@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { IconLogin } from '@/icons'
 import IdCard from '@/components/IdCard.vue'
 import IdDivider from '@/components/IdDivider.vue'
 import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
+import IdAuthNotice from '@/components/identity/IdAuthNotice.vue'
 import IdProviderButton from '@/components/identity/IdProviderButton.vue'
 import { M3Button } from '@clderystd/m3-ui'
 import { useSession } from '@/composables/useSession'
 import { useToast } from '@/composables/useToast'
 import { identityApi, isApiError, type ExternalProvider } from '@/api/client'
+import IdRouteLink from '@/components/identity/IdRouteLink.vue'
 
 /**
  * 登录页。
@@ -126,8 +128,8 @@ function startExternal(name: string) {
         />
 
         <div class="login__links">
-          <RouterLink class="login__link md-typescale-label-large" to="/forgot">找回密码</RouterLink>
-          <RouterLink class="login__link md-typescale-label-large" to="/register">注册账号</RouterLink>
+          <IdRouteLink class="login__link md-typescale-label-large" to="/forgot">找回密码</IdRouteLink>
+          <IdRouteLink class="login__link md-typescale-label-large" to="/register">注册账号</IdRouteLink>
         </div>
 
         <M3Button type="submit" block size="lg" :loading="submitting" :trailing-icon="IconLogin">
@@ -152,14 +154,15 @@ function startExternal(name: string) {
       <template #footer>
         <p class="login__legal">
           登录即表示你同意我们的
-          <RouterLink to="/terms">服务条款</RouterLink>
+          <IdRouteLink to="/terms">服务条款</IdRouteLink>
           与
-          <RouterLink to="/privacy">隐私政策</RouterLink>
+          <IdRouteLink to="/privacy">隐私政策</IdRouteLink>
           。
         </p>
       </template>
     </IdCard>
   </IdLayout>
+  <IdAuthNotice variant="docked" />
 </template>
 
 <style scoped>

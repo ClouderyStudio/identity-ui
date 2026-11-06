@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 /**
  * 品牌标识：图形标 + 站名 + 副标题。
  *
  * 与官网页页眉同一套视觉（圆角方块里放几何标记 + 双行文字），
  * 这里抽成独立组件，登录卡片、站点头部、页脚都复用它。
  */
-withDefaults(
+const props = withDefaults(
   defineProps<{
     /** 站名。 */
     name?: string
@@ -15,7 +17,12 @@ withDefaults(
     size?: number
     /** 纵向堆叠（登录卡片里用），默认横排。 */
     stacked?: boolean
-    /** 用 <a> 渲染并跳转到这个地址；不传则渲染为静态元素。 */
+    /**
+     * 站内路由地址：走前端路由（不整页刷新），且不产生 href，
+     * 所以悬停时浏览器左下角不会浮出地址。与 href 二选一，站内一律用它。
+     */
+    to?: string
+    /** 站外绝对地址：用 <a> 渲染。两者都不传则渲染为静态元素。 */
     href?: string
   }>(),
   {
@@ -23,18 +30,45 @@ withDefaults(
     tagline: '一处登录，全站通行',
     size: 36,
     stacked: false,
+    to: undefined,
     href: undefined,
   },
 )
+
+const router = useRouter()
+
+const tag = computed(() => {
+  // 站内：用不带 href 的 <a>，靠 role=link + 键盘/点击处理跳转
+  if (props.to) return 'a'
+  return props.href ? 'a' : 'div'
+})
+
+const interactive = computed(() => Boolean(props.to || props.href))
+
+function go(): void {
+  if (props.to) void router.push(props.to)
+}
+
+function onKeydown(event: KeyboardEvent): void {
+  if (!props.to) return
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    go()
+  }
+}
 </script>
 
 <template>
   <component
-    :is="href ? 'a' : 'div'"
+    :is="tag"
     class="brand"
     :class="{ 'brand--stacked': stacked }"
     :href="href"
-    :aria-label="href ? name + ' 首页' : undefined"
+    :role="to ? 'link' : undefined"
+    :tabindex="to ? 0 : undefined"
+    :aria-label="interactive ? name + ' 首页' : undefined"
+    @click="go"
+    @keydown="onKeydown"
   >
     <span
       class="brand__mark"

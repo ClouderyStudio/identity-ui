@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+
 import { IconCheckCircle, IconLinkOff } from '@/icons'
 import { M3Button, M3Icon } from '@clderystd/m3-ui'
 import IdCard from '@/components/IdCard.vue'
@@ -9,6 +9,8 @@ import IdLayout from '@/components/IdLayout.vue'
 import IdStrengthMeter from '@/components/identity/IdStrengthMeter.vue'
 import { identityApi, isApiError } from '@/api/client'
 import { useToast } from '@/composables/useToast'
+import IdNavButton from '@/components/identity/IdNavButton.vue'
+import IdRouteLink from '@/components/identity/IdRouteLink.vue'
 
 /**
  * 重置密码：邮件里链接的落点（/reset?token=...）。
@@ -71,7 +73,7 @@ async function submit() {
         <p class="state__text md-typescale-body-medium">
           这个链接缺少必要的参数，请重新申请找回密码。
         </p>
-        <M3Button block href="/forgot">重新申请</M3Button>
+        <IdNavButton block to="/forgot">重新申请</IdNavButton>
       </div>
 
       <!-- 重置成功 -->
@@ -81,7 +83,7 @@ async function submit() {
         </span>
         <h2 class="state__title md-typescale-title-large">密码已重置</h2>
         <p class="state__text md-typescale-body-medium">请使用新密码登录。</p>
-        <M3Button block href="/login">去登录</M3Button>
+        <IdNavButton block to="/login">去登录</IdNavButton>
       </div>
 
       <form v-else class="form" novalidate @submit.prevent="submit">
@@ -113,7 +115,7 @@ async function submit() {
       </form>
 
       <template #footer>
-        <RouterLink class="footer-link" to="/login">返回登录</RouterLink>
+        <IdRouteLink class="footer-link" to="/login">返回登录</IdRouteLink>
       </template>
     </IdCard>
   </IdLayout>

@@ -26,7 +26,7 @@ withDefaults(
     </template>
 
     <template #leading>
-      <IdBrand :name="brand" :tagline="tagline" href="/login" :size="34" />
+      <IdBrand :name="brand" :tagline="tagline" to="/login" :size="34" />
     </template>
 
     <template #actions>

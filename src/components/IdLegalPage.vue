@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+
 import { IconArrowBack } from '@/icons'
-import { M3Button, M3Icon } from '@clderystd/m3-ui'
+import { M3Icon } from '@clderystd/m3-ui'
 import IdCard from './IdCard.vue'
 import IdLayout from './IdLayout.vue'
+import IdAuthNotice from './identity/IdAuthNotice.vue'
+import IdNavButton from './identity/IdNavButton.vue'
+import IdRouteLink from './identity/IdRouteLink.vue'
 
 /** 法务页面外壳：标题 + 生效日期 + 正文，排版窄栏便于阅读。 */
 withDefaults(
@@ -20,10 +23,10 @@ withDefaults(
   <IdLayout>
     <IdCard>
       <template #header>
-        <RouterLink class="legal__back" to="/login">
+        <IdRouteLink class="legal__back" to="/login">
           <M3Icon :icon="IconArrowBack" :size="18" />
           返回登录
-        </RouterLink>
+        </IdRouteLink>
         <h1 class="legal__title md-typescale-headline-medium">{{ title }}</h1>
         <p class="legal__updated md-typescale-body-small">最后更新：{{ updated }}</p>
       </template>
@@ -37,11 +40,12 @@ withDefaults(
       <template #footer>
         <div class="legal__footer">
           <span>如对本文档有疑问，可通过站点公布的联络方式联系我们。</span>
-          <M3Button variant="text" size="sm" :href="'/privacy'">隐私政策</M3Button>
+          <IdNavButton variant="text" size="sm" to="/privacy">隐私政策</IdNavButton>
         </div>
       </template>
     </IdCard>
   </IdLayout>
+  <IdAuthNotice variant="docked" />
 </template>
 
 <style scoped>

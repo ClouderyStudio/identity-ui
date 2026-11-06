@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { provide } from 'vue'
-import { RouterLink } from 'vue-router'
+
 import { IconArrowOutward } from '@/icons'
 import { M3Icon } from '@clderystd/m3-ui'
 import IdBrand from './identity/IdBrand.vue'
 import IdBackground from './IdBackground.vue'
 import IdThemeToggle from './identity/IdThemeToggle.vue'
+import IdRouteLink from './identity/IdRouteLink.vue'
 
 /**
  * 登录类页面外壳（登录 / 注册 / 找回 / 重置 / 改密 / 法务）。
@@ -51,7 +52,7 @@ const year = new Date().getFullYear()
     <main id="id-main" class="auth__panel">
       <div class="auth__panel-inner">
         <header v-if="!bare" class="auth__header">
-          <IdBrand href="/login" :size="34" />
+          <IdBrand to="/login" :size="34" />
           <div class="auth__header-actions">
             <a
               class="auth__site-link md-typescale-label-large"
@@ -73,8 +74,8 @@ const year = new Date().getFullYear()
         <footer v-if="!bare" class="auth__footer">
           <p class="auth__legal md-typescale-body-small">© {{ year }} {{ legal }}</p>
           <nav class="auth__links" aria-label="法务">
-            <RouterLink class="auth__link" to="/terms">服务条款</RouterLink>
-            <RouterLink class="auth__link" to="/privacy">隐私政策</RouterLink>
+            <IdRouteLink class="auth__link" to="/terms">服务条款</IdRouteLink>
+            <IdRouteLink class="auth__link" to="/privacy">隐私政策</IdRouteLink>
           </nav>
         </footer>
       </div>
@@ -217,6 +218,14 @@ const year = new Date().getFullYear()
 
 /* ---------- 窄屏：面板铺满整屏，插画退到后面 ---------- */
 @media (max-width: 900px) {
+  /*
+   * 窄屏下公告是 fixed 贴底通栏（见 IdAuthNotice），不占布局空间。
+   * 这里给滚动内容留出等高留白，否则展开后会把表单最后一行压住。
+   */
+  :global(html.id-has-notice) .auth__body {
+    padding-block-end: 148px;
+  }
+
   .auth__panel {
     width: 100%;
     border-inline-end: none;

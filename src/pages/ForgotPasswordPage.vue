@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { IconArrowBack, IconOutbox } from '@/icons'
-import { RouterLink } from 'vue-router'
+
 import { M3Button, M3Icon } from '@clderystd/m3-ui'
 import IdAlert from '@/components/IdAlert.vue'
 import IdCard from '@/components/IdCard.vue'
 import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
 import { identityApi, isApiError } from '@/api/client'
+import IdNavButton from '@/components/identity/IdNavButton.vue'
+import IdRouteLink from '@/components/identity/IdRouteLink.vue'
 
 /**
  * 找回密码：提交邮箱后由后端发送重置链接（POST /identity/account/forgot-password）。
@@ -42,10 +44,10 @@ async function submit() {
   <IdLayout>
     <IdCard>
       <template #header>
-        <RouterLink class="back" to="/login">
+        <IdRouteLink class="back" to="/login">
           <M3Icon :icon="IconArrowBack" :size="18" />
           返回登录
-        </RouterLink>
+        </IdRouteLink>
 
         <h1 class="title md-typescale-headline-medium">找回密码</h1>
         <p class="subtitle md-typescale-body-medium">输入注册邮箱，我们会发送重置链接。</p>
@@ -59,7 +61,7 @@ async function submit() {
         <p class="sent__text md-typescale-body-medium">
           如果该邮箱对应的账号存在，重置邮件会在几分钟内送达。没有收到时请检查垃圾邮件目录，或稍后重试。
         </p>
-        <M3Button variant="tonal" block href="/login">返回登录</M3Button>
+        <IdNavButton variant="tonal" block to="/login">返回登录</IdNavButton>
       </div>
 
       <form v-else class="form" novalidate @submit.prevent="submit">
@@ -80,7 +82,7 @@ async function submit() {
       </form>
 
       <template #footer>
-        想起密码了？<RouterLink class="footer-link" to="/login">返回登录</RouterLink>
+        想起密码了？<IdRouteLink class="footer-link" to="/login">返回登录</IdRouteLink>
       </template>
     </IdCard>
   </IdLayout>

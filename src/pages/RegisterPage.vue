@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { computed, onUnmounted, reactive, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+
 import { IconArrowBack } from '@/icons'
 import { M3Button, M3Icon } from '@clderystd/m3-ui'
 import IdCard from '@/components/IdCard.vue'
 import IdField from '@/components/IdField.vue'
 import IdLayout from '@/components/IdLayout.vue'
+import IdAuthNotice from '@/components/identity/IdAuthNotice.vue'
 import IdStrengthMeter from '@/components/identity/IdStrengthMeter.vue'
 import { identityApi, isApiError } from '@/api/client'
 import IdAlert from '@/components/IdAlert.vue'
 import { useToast } from '@/composables/useToast'
+import IdNavButton from '@/components/identity/IdNavButton.vue'
+import IdRouteLink from '@/components/identity/IdRouteLink.vue'
 
 /**
  * 注册页。字段与后端 POST /identity/account/register 一一对应。
@@ -121,10 +124,10 @@ async function submit() {
   <IdLayout>
     <IdCard>
       <template #header>
-        <RouterLink class="back" to="/login">
+        <IdRouteLink class="back" to="/login">
           <M3Icon :icon="IconArrowBack" :size="18" />
           返回登录
-        </RouterLink>
+        </IdRouteLink>
 
         <h1 class="title md-typescale-headline-medium">
           {{ isClaim ? '完成注册' : '注册账号' }}
@@ -143,7 +146,7 @@ async function submit() {
       </IdAlert>
       <IdAlert v-else-if="done" variant="success" title="注册成功">
         <p>账号已创建，请使用新密码登录。</p>
-        <M3Button variant="text" size="sm" href="/login">立即登录</M3Button>
+        <IdNavButton variant="text" size="sm" to="/login">立即登录</IdNavButton>
       </IdAlert>
 
       <form v-else class="form" novalidate @submit.prevent="submit">
@@ -213,18 +216,19 @@ async function submit() {
 
         <p class="legal">
           注册即代表你同意我们的
-          <RouterLink to="/terms">服务条款</RouterLink>
+          <IdRouteLink to="/terms">服务条款</IdRouteLink>
           与
-          <RouterLink to="/privacy">隐私政策</RouterLink>
+          <IdRouteLink to="/privacy">隐私政策</IdRouteLink>
           。
         </p>
       </form>
 
       <template #footer>
-        已有账号？<RouterLink class="footer-link" to="/login">直接登录</RouterLink>
+        已有账号？<IdRouteLink class="footer-link" to="/login">直接登录</IdRouteLink>
       </template>
     </IdCard>
   </IdLayout>
+  <IdAuthNotice variant="docked" />
 </template>
 
 <style scoped>
