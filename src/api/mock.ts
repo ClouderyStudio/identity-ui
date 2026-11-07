@@ -302,6 +302,10 @@ async function handle(url: URL, init: RequestInit): Promise<Response | null> {
 
   // 授权确认页的「继续」：演示模式下直接把票据当作已确认，回跳到账户面板，
   // 方便在不连后端时把「倒计时 → 继续」这条路径点通。
+  if (path === '/identity/auth/authorize/rebind' && method === 'POST') {
+    return json({ success: true, ticket: 'mock-ticket-' + Date.now() })
+  }
+
   if (path === '/identity/auth/authorize' && method === 'POST') {
     if (!signedIn) return json({ detail: '会话已失效，请重新登录' }, 401)
     const payload = body(init)

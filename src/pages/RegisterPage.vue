@@ -33,6 +33,20 @@ const claimName = claimParams.get('name') ?? ''
 const claimEmail = claimParams.get('email') ?? ''
 const isClaim = computed(() => claimKey.length > 0)
 
+/**
+ * 认领成功后要回到哪里。
+ *
+ * 第三方登录是从某个应用（或某个授权请求）发起的，服务器把它一路带到这里；
+ * 以前注册完固定去 /account，于是「第三方登录 + 首次注册」这条路径永远回不到原站点 ——
+ * 修完 returnUrl 之后必须一起修这里。
+ * 只认站内相对路径，绝对地址一律丢弃（防开放重定向）。
+ */
+const claimReturnUrl = (() => {
+  const raw = claimParams.get('returnUrl')
+  if (!raw) return '/account'
+  return raw.startsWith('/') && !raw.startsWith('//') ? raw : '/account'
+})()
+
 const form = reactive({
   username: claimName || '',
   email: claimEmail || '',
@@ -109,8 +123,9 @@ async function submit() {
     })
     done.value = true
     if (isClaim.value) {
-      // 认领注册已由服务端建立会话
-      setTimeout(() => window.location.assign('/account'), 1200)
+      // 认领注册已由服务端建立会话；回到发起这次登录的地方（正常是 /authorize?ticket=…）
+      const target = claimReturnUrl
+      setTimeout(() => window.location.assign(target), 1200)
     }
   } catch (error) {
     toast.error(isApiError(error) ? error.detail : '网络异常，请稍后重试', '注册未完成')

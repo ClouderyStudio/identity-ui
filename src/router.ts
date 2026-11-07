@@ -51,6 +51,13 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.guestOnly && current) {
+    // 已登录却被送到登录页：多半是「未登录 → 登录页 → 登录完成」这条链里慢了半拍。
+    // 带着 returnUrl 时必须回到那个目标，否则一次应用授权（/authorize?ticket=…）
+    // 就被吞成账户面板——外部应用也就永远拿不到授权码。
+    const target = typeof to.query.returnUrl === 'string' ? to.query.returnUrl : ''
+    if (target.startsWith('/') && !target.startsWith('//')) {
+      return { path: target }
+    }
     return { path: '/account' }
   }
 

@@ -38,13 +38,50 @@ const router = useRouter()
 const session = useSession()
 const toast = useToast()
 
-/** 最终回跳地址：prop > 查询串 > 账户面板。只接受站内路径，挡住 open redirect。 */
-function resolveReturnUrl(): string {
+/**
+ * 最终回跳地址：prop > 查询串 > 账户面板。
+ *
+ * 站内路径（/xxx）走前端路由；**API 域上的绝对地址**（形如
+ * https://api.cloudery.cn/login/oauth/authorize?…）要整页跳过去 —— 那是
+ * `/login/oauth/authorize` 在未登录时把我们送到这里的那条路径，登录完必须回到它继续发
+ * 授权码，否则外部应用（心灵驿站 / SCForge …）永远回不去。
+ *
+ * 绝对地址只认「本 API 的 authorize 地址」这一种：随便接受外部绝对地址就是开放重定向。
+ */
+function apiBase(): string {
+  return (import.meta.env.VITE_API_BASE ?? '').replace(/\/+$/, '')
+}
+
+type ReturnTarget = { kind: 'route'; to: string } | { kind: 'url'; to: string }
+
+/** 解析最终回跳目标；非法一律退回账户面板。 */
+function resolveReturnTarget(): ReturnTarget {
   const fromQuery = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search).get('returnUrl')
     : null
-  const candidate = props.returnUrl || fromQuery || '/account'
-  return candidate.startsWith('/') && !candidate.startsWith('//') ? candidate : '/account'
+  const candidate = (props.returnUrl || fromQuery || '/account').trim()
+
+  if (candidate.startsWith('/') && !candidate.startsWith('//')) {
+    return { kind: 'route', to: candidate }
+  }
+
+  // 只放行本 API 的授权端点：它是「回到原站点继续登录」的唯一合法绝对地址。
+  const base = apiBase()
+  if (base && candidate.startsWith(base + '/login/oauth/authorize?')) {
+    return { kind: 'url', to: candidate }
+  }
+
+  return { kind: 'route', to: '/account' }
+}
+
+/** 登录成功后真正跳转：站内走路由，授权地址整页跳（浏览器要回到 API 域）。 */
+async function goAfterLogin(): Promise<void> {
+  const target = resolveReturnTarget()
+  if (target.kind === 'url') {
+    window.location.assign(target.to)
+    return
+  }
+  await router.replace(target.to)
 }
 
 const form = reactive({ account: '', password: '' })
@@ -80,9 +117,9 @@ async function submit() {
   submitting.value = true
   try {
     const user = await identityApi.login({ account: form.account.trim(), password: form.password })
-    // 会话 Cookie 已由服务端种下；同步内存状态后走路由，避免整页刷新
+    // 会话 Cookie 已由服务端种下；同步内存状态后再决定去哪
     session.set(user)
-    await router.replace(resolveReturnUrl())
+    await goAfterLogin()
   } catch (error) {
     // 用 snackbar 而不是行内横幅：失败原因常常是一句话，横幅会把表单往下推
     toast.error(isApiError(error) ? error.detail : '网络异常，请稍后再试', '登录未完成')
@@ -91,8 +128,16 @@ async function submit() {
   }
 }
 
+/**
+ * 第三方登录也要带着「回来继续干什么」。
+ *
+ * 传的是站内相对路径：若用户从某个应用的 authorize 过来，它是 /authorize?ticket=...，
+ * 第三方回调回来后落到确认页继续签发授权码；以前固定传 /account，
+ * 于是第三方登录永远回不到原站点。
+ */
 function startExternal(name: string) {
-  identityApi.startExternalLogin(name, resolveReturnUrl())
+  const target = resolveReturnTarget()
+  identityApi.startExternalLogin(name, target.kind === 'url' ? '/account' : target.to)
 }
 </script>
 

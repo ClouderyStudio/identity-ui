@@ -36,6 +36,17 @@
 倒计时秒数由服务端下发（`Identity:AuthorizeConfirmSeconds`，`GET /identity/auth/status` 里给
 `authorizeConfirmSeconds`），`0` 表示必须手动点「继续」。
 
+**未登录进来的那条路**（2026-11-07 修正）：应用带参数访问 `/login/oauth/authorize` 而浏览器还没登录时，
+后端签发一枚票据并跳到 `/login?returnUrl=%2Fauthorize%3Fticket%3D…` ——**站内相对路径**。
+以前这里放的是 API 域上的绝对地址，登录页把它当开放重定向丢掉，于是「心灵驿站登录完落到账户面板」。
+登录成功后回到 `/authorize?ticket=…` 继续签发授权码；第三方登录与「登录其他账户」也带着这枚票据，
+两条路都能回到发起登录的应用。
+
+**站点授权凭证**：会话 Cookie 种在 API 域上，任何站点调 `/identity/auth/status` 都会带上它。
+现在 `status` 只对「这个来源用这个账号完成过一次授权」回已登录（凭证 Cookie `identity_site_grant`，
+在授权码兑换或确认页点「继续」时签发，与来源 + 用户双向绑定）。身份中心自己的域豁免。
+没有这一层，在身份中心登录一次所有站点就全自动登录，确认页根本不会被看到。
+
 ## 命令
 
 ```bash

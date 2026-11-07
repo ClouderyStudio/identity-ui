@@ -150,6 +150,21 @@ export const identityApi = {
   },
 
   /**
+   * 「登录其他账户」之前调用：把票据重新绑定到本浏览器。
+   *
+   * 换号会登出当前会话，而票据原本绑定的是上一个账号；不重绑的话，换号登录后
+   * 消费票据必然「与当前账号不匹配」，用户就回不到发起登录的应用了。
+   * 返回新票据（旧票据在服务端已被消费）。
+   */
+  async rebindAuthorize(ticket: string): Promise<string> {
+    const body = await request<{ success: boolean; ticket: string }>('/identity/auth/authorize/rebind', {
+      method: 'POST',
+      body: JSON.stringify({ ticket }),
+    })
+    return body.ticket
+  },
+
+  /**
    * 口令登录：服务端校验并**签发会话 Cookie**（不是拿 OIDC token）。
    * 账户面板读的是 Cookie 会话，所以面板场景必须走这条，而不是 /connect/token。
    */

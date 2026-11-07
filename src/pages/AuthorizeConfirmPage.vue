@@ -54,9 +54,13 @@ onMounted(async () => {
   const current = await session.ensureLoaded()
   totalSeconds.value = identityApi.authorizeConfirmSeconds()
 
-  // 没有会话就没有「当前账户」可确认：回登录页，登录后还能回到这张页面（票据仍在有效期内）
+  // 没有会话就没有「当前账户」可确认：回登录页，登录后还能回到这张页面（票据仍在有效期内）。
+  // 这里必须传站内相对路径：route.fullPath 带 origin，路由守卫与登录页只认 / 开头。
   if (!current) {
-    await router.replace({ path: '/login', query: { returnUrl: route.fullPath } })
+    await router.replace({
+      path: '/login',
+      query: { returnUrl: '/authorize?ticket=' + ticket.value },
+    })
     return
   }
 
@@ -109,25 +113,49 @@ async function confirm() {
   } catch (failure) {
     submitting.value = false
     if (isApiError(failure) && failure.status === 401) {
-      // 会话在确认途中失效：回登录页，登录后还能回到这张页面（票据仍在有效期）
-      await router.replace({ path: '/login', query: { returnUrl: route.fullPath } })
+      // 会话在确认途中失效：回登录页，登录后还能回到这张页面（票据仍在有效期）。
+      // 传相对路径而不是 route.fullPath：后者带 origin，路由守卫与登录页只认站内路径。
+      await router.replace({
+        path: '/login',
+        query: { returnUrl: '/authorize?ticket=' + ticket.value },
+      })
       return
     }
     error.value = isApiError(failure) ? failure.detail : '网络异常，请稍后重试'
   }
 }
 
-/** 换号：登出当前会话再回登录页。票据属于上一个账号，登出后自然作废。 */
+/**
+ * 换号：先把票据重绑到本浏览器，再登出并回登录页（带上回跳目标）。
+ *
+ * 顺序很重要：
+ *   1. rebind 要用当前会话（后端票据绑在「上一个账号」上，登出后就没法证明这次授权是自己的）；
+ *   2. 登出，清掉会话；
+ *   3. 回登录页，并带上 /authorize?ticket=<新票据>，换号登录后还能回到这张确认页继续。
+ * 不重绑的话，换号后消费旧票据会被后端判「与当前账号不匹配」，用户就回不到发起登录的应用。
+ */
 async function switchAccount() {
   stopCountdown()
   submitting.value = true
+
+  let nextTicket = ticket.value
+  try {
+    nextTicket = await identityApi.rebindAuthorize(ticket.value)
+  } catch {
+    // 票据已过期之类：仍然允许换号，只是登录后回不到原应用（退化成账户面板）
+  }
+
   try {
     await identityApi.signOut()
   } catch {
     // 登出失败也要断开本地状态：否则页面还显示着「已登录的那个人」
   } finally {
     session.clear()
-    await router.replace('/login')
+    submitting.value = false
+    await router.replace({
+      path: '/login',
+      query: nextTicket ? { returnUrl: '/authorize?ticket=' + nextTicket } : {},
+    })
   }
 }
 </script>
