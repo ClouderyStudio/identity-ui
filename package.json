@@ -2,6 +2,7 @@
   "name": "@cloudery/identity-ui",
   "private": true,
   "version": "0.1.0",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "description": "云术身份中心 UI：Material Design 3 的登录 / 注册 / 找回 / 改密 / 账户面板 / 管理后台",
   "files": [
