@@ -56,6 +56,17 @@ export interface ExternalProvider {
   kind: string
 }
 
+interface StatusBody {
+  success: boolean
+  isAuthenticated: boolean
+  user?: CurrentUser
+  /** 授权确认页的倒计时秒数；老后端不下发时按 5 秒处理。 */
+  authorizeConfirmSeconds?: number
+}
+
+/** 最近一次 /identity/auth/status 下发的倒计时秒数（服务端可配，前端只缓存一次）。 */
+let lastAuthorizeConfirmSeconds = 5
+
 const BASE = import.meta.env.VITE_API_BASE ?? ''
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -109,12 +120,33 @@ function defaultDetail(status: number): string {
 }
 
 export const identityApi = {
-  /** 当前登录态；未登录时返回 null（后端 /identity/auth/status 匿名可读）。 */
+  /**
+   * 当前登录态；未登录时返回 null（后端 /identity/auth/status 匿名可读）。
+   * 顺带拿到授权确认页的倒计时秒数——它由服务端配置下发，前端不另存一份常量。
+   */
   async status(): Promise<CurrentUser | null> {
-    const body = await request<{ success: boolean; isAuthenticated: boolean; user?: CurrentUser }>(
-      '/identity/auth/status',
-    )
+    const body = await request<StatusBody>('/identity/auth/status')
+    lastAuthorizeConfirmSeconds = typeof body.authorizeConfirmSeconds === 'number' ? body.authorizeConfirmSeconds : 5
     return body.isAuthenticated && body.user ? body.user : null
+  },
+
+  /** 授权确认页的倒计时秒数（0 = 不自动继续）。读的是最近一次 status 的返回值。 */
+  authorizeConfirmSeconds(): number {
+    return lastAuthorizeConfirmSeconds
+  },
+
+  /**
+   * 授权确认页的「继续」：消费票据，拿回应用自己的回调地址（已带 code 与 state）。
+   *
+   * 票据只在这里用一次；redirect_uri 与 state 由服务端从票据里取，
+   * 前端既看不到也不需要传——这保证了这张页面不可能被改成开放重定向。
+   */
+  async confirmAuthorize(ticket: string): Promise<string> {
+    const body = await request<{ success: boolean; redirectUrl: string }>('/identity/auth/authorize', {
+      method: 'POST',
+      body: JSON.stringify({ ticket }),
+    })
+    return body.redirectUrl
   },
 
   /**

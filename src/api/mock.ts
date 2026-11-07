@@ -293,9 +293,20 @@ async function handle(url: URL, init: RequestInit): Promise<Response | null> {
             success: true,
             isAuthenticated: true,
             user: { id: ME.id, username: ME.username, email: ME.email, avatar: ME.avatar },
+            // 与真实后端同形状：授权确认页的倒计时由服务端下发
+            authorizeConfirmSeconds: 5,
           }
-        : { success: true, isAuthenticated: false },
+        : { success: true, isAuthenticated: false, authorizeConfirmSeconds: 5 },
     )
+  }
+
+  // 授权确认页的「继续」：演示模式下直接把票据当作已确认，回跳到账户面板，
+  // 方便在不连后端时把「倒计时 → 继续」这条路径点通。
+  if (path === '/identity/auth/authorize' && method === 'POST') {
+    if (!signedIn) return json({ detail: '会话已失效，请重新登录' }, 401)
+    const payload = body(init)
+    if (!String(payload.ticket ?? '').trim()) return json({ detail: '缺少授权确认票据' }, 400)
+    return json({ success: true, redirectUrl: '/account?from=mock-authorize' })
   }
 
   if (path === '/identity/account/profile') {

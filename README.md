@@ -21,6 +21,21 @@
 
 账户面板与管理后台用 `IdSiteShell`（顶部应用栏 + 居中宽栏 + 页脚法务行）。
 
+### 授权确认页（`/authorize`）
+
+四个前端应用登录时拼的是 `{endpoint}/login/oauth/authorize`。已登录用户访问这个地址时，
+身份中心**不再静默签发授权码**，而是先跳到 `/authorize?ticket=…`：
+
+- 页面上是「你想切换账户吗？(5s)」+ 当前账户卡（头像 / 昵称 / 邮箱）+ 倒计时进度条；
+- 倒计时结束或点「使用此账户继续」→ `POST /identity/auth/authorize` 消费票据，
+  服务端把 `code` 拼回**应用自己的回调地址**并返回，前端整页跳过去；
+- 点「登录其他账户」→ 登出当前会话并回登录页（票据绑定的是上一个账号，登出后自然作废）。
+
+票据是不透明的：`redirect_uri` 与 `state` 只存在服务端，前端拿不到也传不了，
+所以这张页面不可能被改成「把授权码送到任意站点」的开放重定向。
+倒计时秒数由服务端下发（`Identity:AuthorizeConfirmSeconds`，`GET /identity/auth/status` 里给
+`authorizeConfirmSeconds`），`0` 表示必须手动点「继续」。
+
 ## 命令
 
 ```bash
@@ -67,7 +82,7 @@ src/
                         确认对话框 / 粒子背景 / 主题切换
   components/           IdCard / IdField / IdButton / IdAlert / IdDivider / IdLayout / IdSiteShell /
                         IdLegalPage / IdProviderForm / IdSiteHeader
-  pages/                9 个页面
+  pages/                10 个页面（含授权确认页 AuthorizeConfirmPage）
   composables/          useTheme（cloudery-theme 键，.dark 类）/ useSession / useModal
   directives/           v-ripple、v-reveal
   styles/               index.css 入口：字体 → 配色 → 基础 → 动效 → 身份中心补充层

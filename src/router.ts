@@ -18,6 +18,12 @@ export const router = createRouter({
     { path: '/forgot', name: 'forgot', component: () => import('@/pages/ForgotPasswordPage.vue'), meta: { guestOnly: true } },
     // reset 不能算 guestOnly：用户可能是登录状态下收到邮件链接，仍然要能重置
     { path: '/reset', name: 'reset', component: () => import('@/pages/ResetPasswordPage.vue') },
+    /**
+     * 授权确认页（方案 A）：已登录用户从 /login/oauth/authorize 过来，先确认「现在是谁」。
+     * 不能标 guestOnly —— 它恰恰是**已登录**用户才看得到的页面；
+     * 未登录时由页面自己把用户送回登录页（并带上 returnUrl，登录完还能回来）。
+     */
+    { path: '/authorize', name: 'authorize', component: () => import('@/pages/AuthorizeConfirmPage.vue') },
     { path: '/account', name: 'account', component: () => import('@/pages/AccountPanelPage.vue'), meta: { requiresAuth: true } },
     { path: '/password', name: 'password', component: () => import('@/pages/ChangePasswordPage.vue'), meta: { requiresAuth: true } },
     // 管理员后台：requiresAuth 只保证「已登录」，是不是管理员由后端 [AdminOnly] 判定。

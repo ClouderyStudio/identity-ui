@@ -43,6 +43,7 @@ const ROUTES = [
   { name: 'forgot', path: 'forgot', auth: false },
   { name: 'reset', path: 'reset', auth: false },
   { name: 'terms', path: 'terms', auth: false },
+  { name: 'authorize', path: 'authorize?ticket=shot-ticket', auth: true },
   { name: 'account', path: 'account', auth: true },
   { name: 'password', path: 'password', auth: true },
   { name: 'admin-accounts', path: 'admin/accounts', auth: true },
@@ -102,8 +103,10 @@ const MOCK = `
     const signedIn = () => window.localStorage.getItem('identity-shots-auth') === '1'
     const routes = [
       [/\\/identity\\/auth\\/status/, () => json(signedIn()
-        ? { success: true, isAuthenticated: true, user: { id: profile.id, username: profile.username, email: profile.email } }
-        : { success: true, isAuthenticated: false })],
+        ? { success: true, isAuthenticated: true, authorizeConfirmSeconds: 5,
+            user: { id: profile.id, username: profile.username, email: profile.email, avatar: null } }
+        : { success: true, isAuthenticated: false, authorizeConfirmSeconds: 5 })],
+      [/\\/identity\\/auth\\/authorize/, () => json({ success: true, redirectUrl: '/account' })],
       [/\\/identity\\/account\\/profile/, () => json({ success: true, user: profile })],
       [/\\/identity\\/external\\/providers/, () => json(external)],
       [/\\/identity\\/admin\\/accounts\\//, () => json({ success: true, sites: ['identity', 'sccode', 'mhop', 'lkdns'], roles: [{ site: 'identity', role: 'admin', updatedAt: '2025-06-01T00:00:00Z' }] })],
