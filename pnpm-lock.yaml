@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@clderystd/m3-ui':
-        specifier: 0.3.0
-        version: 0.3.0(vue@3.5.44(typescript@6.0.3))
+        specifier: 0.4.0
+        version: 0.4.0(vue@3.5.44(typescript@6.0.3))
       vue:
         specifier: ^3.5.42
         version: 3.5.44(typescript@6.0.3)
@@ -74,8 +74,8 @@ packages:
     resolution: {integrity: sha512-WCsemW40Cpc6gouC1SrY6PBaZ+oLRlEVY9XBvZBI7il/HyUrb2nJ505wE1MHEFyDZNnrWDEuy4jL50WVHfTTSQ==}
     engines: {node: '>=6.9.0'}
 
-  '@clderystd/m3-ui@0.3.0':
-    resolution: {integrity: sha512-awTZlBiLr8isHz6oCmHeefpdnqDeZUTAiFzgR4vnfFAwO27pGD0ZtXFC46Skuf9ul2bMZ6lPVXBsgq6b+O0hYg==}
+  '@clderystd/m3-ui@0.4.0':
+    resolution: {integrity: sha512-8vzCCCpMhweQXdeLXThsJEXJ3Uvm60klaM49Dl+lC7N777OshYP1Pubfo7J94LAjmVLeETvU/GOKnesossuPkA==}
     peerDependencies:
       vue: ^3.5.0
 
@@ -651,7 +651,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.11
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@clderystd/m3-ui@0.3.0(vue@3.5.44(typescript@6.0.3))':
+  '@clderystd/m3-ui@0.4.0(vue@3.5.44(typescript@6.0.3))':
     dependencies:
       vue: 3.5.44(typescript@6.0.3)
 
