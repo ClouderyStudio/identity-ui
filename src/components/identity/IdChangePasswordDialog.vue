@@ -1,32 +1,43 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 
-import { IconArrowBack } from '@/icons'
-import { M3Button, M3Icon } from '@clderystd/m3-ui'
-import IdAlert from '@/components/IdAlert.vue'
-import IdCard from '@/components/IdCard.vue'
-import IdField from '@/components/IdField.vue'
-import IdLayout from '@/components/IdLayout.vue'
-import IdStrengthMeter from '@/components/identity/IdStrengthMeter.vue'
+import { M3Button, M3Dialog } from '@clderystd/m3-ui'
+import IdField from '../IdField.vue'
+import IdStrengthMeter from './IdStrengthMeter.vue'
 import { identityApi, isApiError } from '@/api/client'
 import { useToast } from '@/composables/useToast'
-import IdRouteLink from '@/components/identity/IdRouteLink.vue'
 
 /**
- * 改密页。对应 POST /identity/account/password（需登录）。
+ * 修改密码对话框。对应 POST /identity/account/password（需登录）。
  *
  * 已经用第三方账号登录、或存量账号还没设本地密码时，后端会回
  * 「该账号没有本地密码，无法在此设置」——这个提示原样展示，不改成含糊的说法。
  */
+const open = defineModel<boolean>({ required: true })
+
 const form = reactive({ current: '', next: '', confirm: '' })
 const errors = reactive({ current: '', next: '', confirm: '' })
 const submitting = ref(false)
 const toast = useToast()
-const success = ref(false)
 
 const sameAsCurrent = computed(
   () => form.next.length > 0 && form.next === form.current,
 )
+
+/** 每次打开都回到空白状态，上一次的输入与红框不该留到下一次。 */
+function reset(): void {
+  form.current = ''
+  form.next = ''
+  form.confirm = ''
+  errors.current = ''
+  errors.next = ''
+  errors.confirm = ''
+  submitting.value = false
+}
+
+watch(open, (value) => {
+  if (value) reset()
+})
 
 function validate(): boolean {
   errors.current = form.current ? '' : '请输入当前密码'
@@ -37,16 +48,15 @@ function validate(): boolean {
 }
 
 async function submit() {
-  success.value = false
   if (!validate()) return
 
   submitting.value = true
   try {
     await identityApi.changePassword({ currentPassword: form.current, newPassword: form.next })
-    success.value = true
-    form.current = ''
-    form.next = ''
-    form.confirm = ''
+    // 成功后关掉对话框，结果用全局 snackbar 反馈——不用对话框里的一次性成功块
+    reset()
+    open.value = false
+    toast.success('下次登录请使用新密码。', '密码已修改')
   } catch (error) {
     toast.error(isApiError(error) ? error.detail : '网络异常，请稍后重试', '操作未完成')
   } finally {
@@ -56,23 +66,13 @@ async function submit() {
 </script>
 
 <template>
-  <IdLayout>
-    <IdCard>
-      <template #header>
-        <IdRouteLink class="back" to="/account">
-          <M3Icon :icon="IconArrowBack" :size="18" />
-          返回账户面板
-        </IdRouteLink>
+  <M3Dialog v-model="open" title="修改密码">
+    <div class="password">
+      <p class="password__hint md-typescale-body-small">
+        修改后其它设备上的登录状态不会立即失效。
+      </p>
 
-        <h1 class="title md-typescale-headline-medium">修改密码</h1>
-        <p class="subtitle md-typescale-body-medium">修改后其它设备上的登录状态不会立即失效。</p>
-      </template>
-
-      <IdAlert v-if="success" variant="success" title="密码已修改">
-        下次登录请使用新密码。
-      </IdAlert>
-
-      <form class="form" novalidate @submit.prevent="submit">
+      <form id="id-change-password-form" class="password__form" novalidate @submit.prevent="submit">
         <IdField
           v-model="form.current"
           label="当前密码"
@@ -84,7 +84,7 @@ async function submit() {
           :error="errors.current"
         />
 
-        <div class="password-block">
+        <div class="password__block">
           <IdField
             v-model="form.next"
             label="新密码"
@@ -109,53 +109,36 @@ async function submit() {
           required
           :error="errors.confirm"
         />
-
-        <M3Button type="submit" block size="lg" :loading="submitting">保存新密码</M3Button>
       </form>
-    </IdCard>
-  </IdLayout>
+    </div>
+
+    <template #actions>
+      <M3Button variant="text" :disabled="submitting" @click="open = false">取消</M3Button>
+      <!-- 按钮在对话框底部操作区，用 form 属性关联到正文里的表单，回车提交也照常可用 -->
+      <M3Button
+        type="submit"
+        form="id-change-password-form"
+        :loading="submitting"
+      >
+        保存新密码
+      </M3Button>
+    </template>
+  </M3Dialog>
 </template>
 
 <style scoped>
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  align-self: flex-start;
-  margin-block-end: 10px;
-  padding: 4px 10px 4px 4px;
-  border-radius: var(--md-sys-shape-corner-full);
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: var(--md-sys-typescale-label-large-size);
-  font-weight: var(--md-sys-typescale-label-large-weight);
-  text-decoration: none;
-  transition:
-    background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
-}
-
-.back:hover {
-  background-color: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-primary);
-}
-
-.title {
-  margin: 0;
-  color: var(--md-sys-color-on-surface);
-}
-
-.subtitle {
-  margin: 0;
+.password__hint {
+  margin: 0 0 16px;
   color: var(--md-sys-color-on-surface-variant);
 }
 
-.form {
+.password__form {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.password-block {
+.password__block {
   display: flex;
   flex-direction: column;
 }

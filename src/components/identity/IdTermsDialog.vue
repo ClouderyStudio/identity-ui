@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import IdLegalPage from '@/components/IdLegalPage.vue'
+import IdLegalDialog from './IdLegalDialog.vue'
 
 /**
- * 服务条款。
+ * 服务条款对话框。
  *
  * 这是**面向本站点的通用条款**，不是法律意见；正式上线前应由法务按实际运营主体复核。
  * 每条都对应真实使用的功能，不写没有实现的承诺。
  */
+const open = defineModel<boolean>({ required: true })
 </script>
 
 <template>
-  <IdLegalPage
+  <IdLegalDialog
+    v-model="open"
     title="服务条款"
     updated="2026 年 11 月 2 日"
     intro="欢迎使用云术身份中心。在使用本服务前，请阅读并同意以下条款。你注册账号或使用本服务，即视为已接受本条款。"
@@ -56,5 +58,5 @@ import IdLegalPage from '@/components/IdLegalPage.vue'
 
     <h2>七、联系我们</h2>
     <p>如对本条款有疑问，可通过站点公布的联络方式与我们联系。</p>
-  </IdLegalPage>
+  </IdLegalDialog>
 </template>

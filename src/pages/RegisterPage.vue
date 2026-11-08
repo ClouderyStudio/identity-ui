@@ -12,6 +12,7 @@ import { identityApi, isApiError } from '@/api/client'
 import IdAlert from '@/components/IdAlert.vue'
 import { useToast } from '@/composables/useToast'
 import IdNavButton from '@/components/identity/IdNavButton.vue'
+import IdLegalLink from '@/components/identity/IdLegalLink.vue'
 import IdRouteLink from '@/components/identity/IdRouteLink.vue'
 
 /**
@@ -231,9 +232,9 @@ async function submit() {
 
         <p class="legal">
           注册即代表你同意我们的
-          <IdRouteLink to="/terms">服务条款</IdRouteLink>
+          <IdLegalLink to="terms">服务条款</IdLegalLink>
           与
-          <IdRouteLink to="/privacy">隐私政策</IdRouteLink>
+          <IdLegalLink to="privacy">隐私政策</IdLegalLink>
           。
         </p>
       </form>

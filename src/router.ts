@@ -6,8 +6,10 @@ import { useSession } from '@/composables/useSession'
  *
  * 守卫规则：
  *   - 已登录访问 /login、/register、/forgot → 直接进 /account（账户面板）
- *   - 未登录访问 /account、/password、/admin/* → 回 /login，并带上 returnUrl
- *   - 条款 / 隐私页对所有人开放
+ *   - 未登录访问 /account、/admin/* → 回 /login，并带上 returnUrl
+ *
+ * 服务条款、隐私政策、修改密码已改为对话框（components/identity），不再占用独立页面；
+ * 旧地址只做重定向，避免历史书签落到空白页。
  */
 export const router = createRouter({
   history: createWebHistory(),
@@ -25,13 +27,14 @@ export const router = createRouter({
      */
     { path: '/authorize', name: 'authorize', component: () => import('@/pages/AuthorizeConfirmPage.vue') },
     { path: '/account', name: 'account', component: () => import('@/pages/AccountPanelPage.vue'), meta: { requiresAuth: true } },
-    { path: '/password', name: 'password', component: () => import('@/pages/ChangePasswordPage.vue'), meta: { requiresAuth: true } },
     // 管理员后台：requiresAuth 只保证「已登录」，是不是管理员由后端 [AdminOnly] 判定。
     // 前端刻意不做管理员判定——名单在服务端配置里，前端拿不到也不该复制一份。
     { path: '/admin/accounts', name: 'admin-accounts', component: () => import('@/pages/AdminAccountsPage.vue'), meta: { requiresAuth: true } },
     { path: '/admin/providers', name: 'admin-providers', component: () => import('@/pages/AdminProvidersPage.vue'), meta: { requiresAuth: true } },
-    { path: '/terms', name: 'terms', component: () => import('@/pages/TermsPage.vue') },
-    { path: '/privacy', name: 'privacy', component: () => import('@/pages/PrivacyPage.vue') },
+    // 法务与改密现在是对话框：旧地址回落到入口页，不再渲染独立页面
+    { path: '/terms', redirect: '/login' },
+    { path: '/privacy', redirect: '/login' },
+    { path: '/password', redirect: '/account' },
     // 其余地址一律回登录页，避免露出空白页
     { path: '/:pathMatch(.*)*', redirect: '/login' },
   ],

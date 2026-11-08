@@ -39,16 +39,45 @@ const VIEWPORTS = [
 ]
 const ROUTES = [
   { name: 'login', path: 'login', auth: false },
+  { name: 'login-terms', path: 'login', auth: false, open: 'terms' },
+  { name: 'login-privacy', path: 'login', auth: false, open: 'privacy' },
   { name: 'register', path: 'register', auth: false },
   { name: 'forgot', path: 'forgot', auth: false },
   { name: 'reset', path: 'reset', auth: false },
-  { name: 'terms', path: 'terms', auth: false },
   { name: 'authorize', path: 'authorize?ticket=shot-ticket', auth: true },
   { name: 'account', path: 'account', auth: true },
-  { name: 'password', path: 'password', auth: true },
+  { name: 'account-password', path: 'account', auth: true, open: 'password' },
   { name: 'admin-accounts', path: 'admin/accounts', auth: true },
   { name: 'admin-providers', path: 'admin/providers', auth: true },
 ]
+
+/* 点开对话框：条款 / 隐私点页脚链接，改密点账户面板的「修改密码」 */
+const OPEN_DIALOG = (kind) => {
+  if (kind === 'password') {
+    return `(() => {
+      const btn = [...document.querySelectorAll('button')].find((el) => el.textContent.trim() === '修改密码')
+      if (btn) btn.click()
+      return Boolean(btn)
+    })()`
+  }
+  const label = kind === 'terms' ? '服务条款' : '隐私政策'
+  return `(() => {
+    const link = [...document.querySelectorAll('[role="link"]')]
+      .find((el) => el.textContent.trim() === ${JSON.stringify(label)})
+    if (link) link.click()
+    return Boolean(link)
+  })()`
+}
+
+const WAIT_DIALOG = `new Promise((resolve) => {
+  const started = Date.now()
+  const tick = () => {
+    if (document.querySelector('.md-dialog')) return resolve(true)
+    if (Date.now() - started > 4000) return resolve(false)
+    setTimeout(tick, 50)
+  }
+  tick()
+})`
 const ONLY = args.get('only')
 
 /* 假后端：只为截图服务，返回形状与真实接口一致 */
@@ -222,6 +251,12 @@ for (const theme of THEMES) {
       await send('Page.navigate', { url: new URL(route.path, URL_BASE).href })
       await loaded.catch(() => {})
       await sleep(1600)
+      if (route.open) {
+        const opened = await evaluate(OPEN_DIALOG(route.open))
+        if (!opened) console.log('  (dialog trigger not found)')
+        await evaluate(WAIT_DIALOG)
+        await sleep(400)
+      }
       await evaluate('window.scrollTo(0, 0)')
       await capture(label)
     }

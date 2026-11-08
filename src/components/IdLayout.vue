@@ -6,10 +6,10 @@ import { M3Icon } from '@clderystd/m3-ui'
 import IdBrand from './identity/IdBrand.vue'
 import IdBackground from './IdBackground.vue'
 import IdThemeToggle from './identity/IdThemeToggle.vue'
-import IdRouteLink from './identity/IdRouteLink.vue'
+import IdLegalLink from './identity/IdLegalLink.vue'
 
 /**
- * 登录类页面外壳（登录 / 注册 / 找回 / 重置 / 改密 / 法务）。
+ * 登录类页面外壳（登录 / 注册 / 找回 / 重置）。
  *
  * 结构：左侧留给背景插画（不铺任何蒙版，照片原样呈现），
  * 右侧是一块**贴满屏幕右半边、高度恰好等于视口**的毛玻璃面板，
@@ -74,8 +74,8 @@ const year = new Date().getFullYear()
         <footer v-if="!bare" class="auth__footer">
           <p class="auth__legal md-typescale-body-small">© {{ year }} {{ legal }}</p>
           <nav class="auth__links" aria-label="法务">
-            <IdRouteLink class="auth__link" to="/terms">服务条款</IdRouteLink>
-            <IdRouteLink class="auth__link" to="/privacy">隐私政策</IdRouteLink>
+            <IdLegalLink class="auth__link" to="terms">服务条款</IdLegalLink>
+            <IdLegalLink class="auth__link" to="privacy">隐私政策</IdLegalLink>
           </nav>
         </footer>
       </div>

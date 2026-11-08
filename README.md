@@ -1,6 +1,7 @@
 # 云术身份中心 · identity-ui
 
-云术工作室的统一身份界面：登录 / 注册 / 找回 / 重置 / 改密 / 账户面板 / 管理后台 / 法务页面。
+云术工作室的统一身份界面：登录 / 注册 / 找回 / 重置 / 账户面板 / 管理后台；
+修改密码与法务文档（服务条款、隐私政策）以对话框呈现，不占独立页面。
 界面完全按 **Material Design 3** 实现，设计系统与 [official-site](../official-site) 同源：
 
 - 配色 = official-site 生成的 `m3-color-tokens.css`（浅色 / 深色两套完整 M3 角色）
@@ -11,7 +12,7 @@
 
 ## 页面结构
 
-登录类页面（登录 / 注册 / 找回 / 重置 / 改密 / 法务）统一用 `IdLayout`：
+登录类页面（登录 / 注册 / 找回 / 重置）统一用 `IdLayout`：
 
 - 背景插画铺满整个视口，**不叠任何蒙版**，图片原样呈现；
 - 左侧是一块**贴住屏幕左缘、高度严格等于视口**的毛玻璃面板，宽度约 1/4 屏；
@@ -20,6 +21,11 @@
 - 窄屏（≤900px）面板铺满整屏，表面加实以保持可读。
 
 账户面板与管理后台用 `IdSiteShell`（顶部应用栏 + 居中宽栏 + 页脚法务行）。
+
+服务条款、隐私政策、修改密码不再有独立路由，一律用 `M3Dialog` 就地打开：
+页脚的「服务条款 / 隐私政策」是 `IdLegalLink`（外观与站内链接一致，点击打开对应文档），
+账户面板的两个「修改密码」入口打开 `IdChangePasswordDialog`。
+对话框内部滚动长文，标题与底部操作区固定。
 
 ### 授权确认页（`/authorize`）
 
@@ -90,10 +96,10 @@ M3 组件来自独立仓库 [m3-ui](../m3-ui)，发布为 `@clderystd/m3-ui`：
 src/
   components/m3/        official-site 的 M3 组件库（18 个组件 + vRipple 出口）
   components/identity/  身份中心专用：品牌标识 / 页面标题 / 下拉 / 强度条 / 第三方登录按钮 /
-                        确认对话框 / 粒子背景 / 主题切换
+                        确认对话框 / 条款与隐私对话框 / 修改密码对话框 / 粒子背景 / 主题切换
   components/           IdCard / IdField / IdButton / IdAlert / IdDivider / IdLayout / IdSiteShell /
-                        IdLegalPage / IdProviderForm / IdSiteHeader
-  pages/                10 个页面（含授权确认页 AuthorizeConfirmPage）
+                        IdProviderForm / IdSiteHeader
+  pages/                8 个页面（含授权确认页 AuthorizeConfirmPage）
   composables/          useTheme（cloudery-theme 键，.dark 类）/ useSession / useModal
   directives/           v-ripple、v-reveal
   styles/               index.css 入口：字体 → 配色 → 基础 → 动效 → 身份中心补充层

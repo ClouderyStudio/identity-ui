@@ -18,6 +18,7 @@ import {
 import { M3Avatar, M3Button, M3Card, M3Chip, M3Icon } from '@clderystd/m3-ui'
 import IdAlert from '@/components/IdAlert.vue'
 import IdAuthNotice from '@/components/identity/IdAuthNotice.vue'
+import IdChangePasswordDialog from '@/components/identity/IdChangePasswordDialog.vue'
 import IdThemeToggle from '@/components/identity/IdThemeToggle.vue'
 import IdSiteShell from '@/components/IdSiteShell.vue'
 import { identityApi, isApiError, type AccountProfile, type ExternalProvider } from '@/api/client'
@@ -40,6 +41,7 @@ const providers = ref<ExternalProvider[]>([])
 const loading = ref(true)
 const message = ref('')
 const busy = ref('')
+const passwordOpen = ref(false)
 
 const unbound = computed(() => {
   const bound = new Set((profile.value?.bindings ?? []).map((item) => item.provider))
@@ -257,7 +259,7 @@ const facts = computed(() => {
                 variant="tonal"
                 size="sm"
                 :icon="IconKey"
-                @click="router.push('/password')"
+                @click="passwordOpen = true"
               >
                 修改密码
               </M3Button>
@@ -306,7 +308,7 @@ const facts = computed(() => {
                   <p class="binding__name md-typescale-body-large">账号密码</p>
                   <p class="binding__time md-typescale-body-small">已设置</p>
                 </div>
-                <M3Button variant="text" size="sm" @click="router.push('/password')">修改</M3Button>
+                <M3Button variant="text" size="sm" @click="passwordOpen = true">修改</M3Button>
               </li>
             </ul>
 
@@ -335,6 +337,9 @@ const facts = computed(() => {
         </div>
       </div>
     </template>
+
+    <!-- 改密不再是独立页面：在这里以对话框打开，成功后留在账户面板 -->
+    <IdChangePasswordDialog v-model="passwordOpen" />
   </IdSiteShell>
 </template>
 

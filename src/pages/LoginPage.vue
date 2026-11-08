@@ -12,6 +12,7 @@ import { M3Button } from '@clderystd/m3-ui'
 import { useSession } from '@/composables/useSession'
 import { useToast } from '@/composables/useToast'
 import { identityApi, isApiError, type ExternalProvider } from '@/api/client'
+import IdLegalLink from '@/components/identity/IdLegalLink.vue'
 import IdRouteLink from '@/components/identity/IdRouteLink.vue'
 
 /**
@@ -199,9 +200,9 @@ function startExternal(name: string) {
       <template #footer>
         <p class="login__legal">
           登录即表示你同意我们的
-          <IdRouteLink to="/terms">服务条款</IdRouteLink>
+          <IdLegalLink to="terms">服务条款</IdLegalLink>
           与
-          <IdRouteLink to="/privacy">隐私政策</IdRouteLink>
+          <IdLegalLink to="privacy">隐私政策</IdLegalLink>
           。
         </p>
       </template>

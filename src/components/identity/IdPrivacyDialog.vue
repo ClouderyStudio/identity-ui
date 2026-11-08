@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import IdLegalPage from '@/components/IdLegalPage.vue'
+import IdLegalDialog from './IdLegalDialog.vue'
 
 /**
- * 隐私政策。只写**实际采集与使用**的数据，不写没有实施的做法，
+ * 隐私政策对话框。只写**实际采集与使用**的数据，不写没有实施的做法，
  * 否则政策本身就成了虚假陈述。
  */
+const open = defineModel<boolean>({ required: true })
 </script>
 
 <template>
-  <IdLegalPage
+  <IdLegalDialog
+    v-model="open"
     title="隐私政策"
     updated="2026 年 11 月 2 日"
     intro="本政策说明云术身份中心收集哪些信息、如何使用与保护这些信息，以及你享有的权利。"
@@ -58,5 +60,5 @@ import IdLegalPage from '@/components/IdLegalPage.vue'
 
     <h2>七、政策更新</h2>
     <p>本政策可能随功能调整而更新，更新内容将在本页面公布。</p>
-  </IdLegalPage>
+  </IdLegalDialog>
 </template>
