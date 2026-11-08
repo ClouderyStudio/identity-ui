@@ -114,9 +114,28 @@ const year = new Date().getFullYear()
 }
 
 @media (max-width: 720px) {
-  /* 窄屏只留图标按钮，文字版导航收进页面里的入口 */
-  .shell__nav :deep(.md-btn) {
-    display: none;
+  /*
+   * 窄屏没有放整行文字按钮的空间，但按钮不能直接消失：
+   * 有图标的按钮收成 40dp 圆形图标按钮，文字只做视觉隐藏（仍留在无障碍名称里）。
+   * 没有图标的文字按钮保持原样——只剩图标会变成一个没有含义的空按钮。
+   */
+  .shell__nav :deep(.md-btn:has(.md-btn__icon)) {
+    width: 40px;
+    height: 40px;
+    padding-inline: 0;
+    gap: 0;
+  }
+
+  .shell__nav :deep(.md-btn:has(.md-btn__icon) .md-btn__label) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
   }
 }
 

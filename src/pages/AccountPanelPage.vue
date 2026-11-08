@@ -394,10 +394,12 @@ const facts = computed(() => {
 
 .hero__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 2px 8px;
   margin: 2px 0 0;
   color: var(--md-sys-color-on-surface-variant);
+  overflow-wrap: anywhere;
 }
 
 .hero__id {
@@ -563,6 +565,20 @@ const facts = computed(() => {
 
   .facts {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 顶栏在窄屏只留图标按钮，用户名交给下方的 Hero 表达，避免挤掉操作入口 */
+@media (max-width: 720px) {
+  .nav-user {
+    display: none;
+  }
+}
+
+/* 窄屏 UID 与邮箱各占一行，行尾的间隔点没有意义 */
+@media (max-width: 560px) {
+  .hero__dot {
+    display: none;
   }
 }
 .account-notice {
